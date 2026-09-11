@@ -1,0 +1,17 @@
+{
+  "domains": {
+    "web": "www.econav.in",
+    "webAlias": "econav.in",
+    "api": "api.econav.in"
+  },
+  "urls": {
+    "web": "https://www.econav.in",
+    "api": "https://api.econav.in"
+  },
+  "railway": {
+    "service": "econav-api"
+  },
+  "vercel": {
+    "project": "econav-web"
+  }
+}

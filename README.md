@@ -189,6 +189,21 @@ Copy `.env.example` to `.env`:
 | `npm test` | Run all unit tests |
 | `npm run build` | Build all packages |
 
+## Deploy to Production
+
+Deploy to **www.econav.in** with a single command:
+
+```bash
+# One-time setup
+cp .env.deploy.example .env.deploy   # add VERCEL_TOKEN + RAILWAY_TOKEN
+npm run setup:deploy
+
+# Every deploy
+npm run deploy
+```
+
+See [DEPLOY.md](DEPLOY.md) for DNS setup and troubleshooting.
+
 ## License
 
 MIT License — see [LICENSE](LICENSE).

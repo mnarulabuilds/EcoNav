@@ -15,6 +15,11 @@ web-build/
 .env
 .env.local
 .env.*.local
+.env.deploy
+
+# Deploy tooling
+.vercel
+.railway
 
 # Logs
 logs/

@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 import { healthRoutes } from './routes/health.js';
 import { planRoutes } from './routes/plan.js';
 
-const PORT = Number(process.env.API_PORT ?? 3001);
+const PORT = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
 const HOST = process.env.API_HOST ?? '0.0.0.0';
 const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
   .split(',')
