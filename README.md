@@ -191,18 +191,21 @@ Copy `.env.example` to `.env`:
 
 ## Deploy to Production
 
-Deploy to **www.econav.in** with a single command:
+### Railway + GitHub (recommended)
+
+Connect your GitHub repo to Railway for auto-deploy on every push to `main`:
+
+**→ [RAILWAY-GITHUB.md](RAILWAY-GITHUB.md)** — full steps for `www.econav.in` + `api.econav.in`
+
+### CLI deploy (alternative)
 
 ```bash
-# One-time setup
-cp .env.deploy.example .env.deploy   # add VERCEL_TOKEN + RAILWAY_TOKEN
-npm run setup:deploy
-
-# Every deploy
-npm run deploy
+cp .env.deploy.example .env.deploy
+npm run setup:deploy   # one-time
+npm run deploy         # every release
 ```
 
-See [DEPLOY.md](DEPLOY.md) for DNS setup and troubleshooting.
+See [DEPLOY.md](DEPLOY.md) for CLI-based deployment.
 
 ## License
 
