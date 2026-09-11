@@ -1,23 +1,18 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import { buildCorsOptions } from './cors.js';
 import { healthRoutes } from './routes/health.js';
 import { planRoutes } from './routes/plan.js';
 
 const PORT = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
 const HOST = process.env.API_HOST ?? '0.0.0.0';
-const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:3000')
-  .split(',')
-  .map((o) => o.trim());
 
 async function buildServer() {
   const fastify = Fastify({
     logger: process.env.NODE_ENV !== 'test',
   });
 
-  await fastify.register(cors, {
-    origin: CORS_ORIGINS,
-    methods: ['GET', 'POST', 'OPTIONS'],
-  });
+  await fastify.register(cors, buildCorsOptions());
 
   await fastify.register(healthRoutes);
   await fastify.register(planRoutes);
