@@ -70,7 +70,15 @@ configure_railway_setup() {
 }
 
 railway_project_args() {
+  local args=()
   if [[ -n "${RAILWAY_PROJECT_ID:-}" ]]; then
-    echo "--project" "$RAILWAY_PROJECT_ID"
+    args+=("--project" "$RAILWAY_PROJECT_ID")
+    # CLI v5 requires --environment when --project is set
+    if [[ -n "${RAILWAY_ENVIRONMENT_ID:-}" ]]; then
+      args+=("--environment" "$RAILWAY_ENVIRONMENT_ID")
+    else
+      args+=("--environment" "${RAILWAY_ENVIRONMENT:-production}")
+    fi
   fi
+  echo "${args[@]}"
 }

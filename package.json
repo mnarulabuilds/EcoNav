@@ -18,7 +18,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "setup:deploy": "bash scripts/setup-deploy.sh",
-    "deploy": "bash scripts/deploy.sh"
+    "deploy": "bash scripts/deploy.sh",
+    "go-live": "bash scripts/go-live.sh"
   },
   "engines": {
     "node": ">=20.0.0"
