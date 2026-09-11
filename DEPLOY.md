@@ -68,6 +68,9 @@ This will:
 | API not reachable | Check Railway logs; confirm DNS for `api.econav.in` |
 | Web shows old API URL | Redeploy with `npm run deploy` |
 | Tests fail | Fix failing tests before deploy (deploy aborts on test failure) |
+| `railway/iac requires Railway CLI 5.42.1` | Fixed — scripts use `@railway/cli`, not the `railway` SDK package |
+| `Not signed in` on deploy | Use a **Project Token** as `RAILWAY_TOKEN` (Project → Settings → Tokens). Account tokens go in `RAILWAY_API_TOKEN` for setup only |
+| `railway variables` fails | Fixed — CLI v5 uses `railway variable set` |
 
 ---
 

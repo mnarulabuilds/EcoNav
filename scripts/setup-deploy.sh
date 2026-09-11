@@ -42,9 +42,22 @@ if [[ -z "${VERCEL_TOKEN:-}" || -z "${RAILWAY_TOKEN:-}" ]]; then
   exit 1
 fi
 
-export VERCEL_TOKEN RAILWAY_TOKEN
+export VERCEL_TOKEN
 VERCEL="npx vercel"
-RAILWAY="npx railway"
+# Must use @railway/cli — the `railway` package is the TypeScript SDK, not the CLI
+RAILWAY="npx @railway/cli"
+
+# Setup needs account token; fall back to project token if provided
+if [[ -z "${RAILWAY_API_TOKEN:-}" && -n "${RAILWAY_TOKEN:-}" ]]; then
+  warn "Using RAILWAY_TOKEN for setup. For linking, an account token (RAILWAY_API_TOKEN) is recommended."
+  export RAILWAY_TOKEN
+elif [[ -n "${RAILWAY_API_TOKEN:-}" ]]; then
+  export RAILWAY_API_TOKEN
+  unset RAILWAY_TOKEN
+else
+  warn "Add RAILWAY_API_TOKEN (account token) to .env.deploy for setup"
+  exit 1
+fi
 
 # ── Railway (API) ─────────────────────────────────────────────────────────────
 info "Setting up Railway project for API..."
@@ -55,13 +68,14 @@ if [[ ! -f .railway/config.json ]]; then
 fi
 
 info "Setting Railway environment variables..."
-$RAILWAY variables set \
+$RAILWAY variable set \
   NODE_ENV=production \
   API_HOST=0.0.0.0 \
-  "CORS_ORIGINS=${CORS_ORIGINS}"
+  "CORS_ORIGINS=${CORS_ORIGINS}" \
+  --skip-deploys
 
 info "Deploying API (first time)..."
-$RAILWAY up --detach
+$RAILWAY up --detach --yes
 
 warn "In Railway dashboard (https://railway.com/dashboard):"
 warn "  1. Open econav-api → Settings → Networking → Custom Domain"

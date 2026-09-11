@@ -22,5 +22,9 @@
   },
   "engines": {
     "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "@railway/cli": "^5.52.1",
+    "vercel": "^41.0.0"
   }
 }

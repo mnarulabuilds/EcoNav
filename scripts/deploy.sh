@@ -39,9 +39,15 @@ if [[ -z "${VERCEL_TOKEN:-}" || -z "${RAILWAY_TOKEN:-}" ]]; then
   exit 1
 fi
 
-export VERCEL_TOKEN RAILWAY_TOKEN
+export VERCEL_TOKEN
 VERCEL="npx vercel"
-RAILWAY="npx railway"
+# Must use @railway/cli — the `railway` package is the TypeScript SDK, not the CLI
+RAILWAY="npx @railway/cli"
+
+# shellcheck disable=SC1091
+source "$ROOT/scripts/lib/railway-auth.sh"
+configure_railway_auth
+RAILWAY_PROJECT_FLAGS=( $(railway_project_args) )
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 info "Running tests..."
@@ -51,8 +57,19 @@ npm test --silent
 info "Deploying API → ${API_DOMAIN}..."
 cd "$ROOT"
 
-$RAILWAY variables set "CORS_ORIGINS=${CORS_ORIGINS}" 2>/dev/null || true
-$RAILWAY up --detach
+$RAILWAY variable set "CORS_ORIGINS=${CORS_ORIGINS}" --skip-deploys "${RAILWAY_PROJECT_FLAGS[@]}" 2>/dev/null \
+  || warn "Could not update CORS_ORIGINS — set it manually in Railway dashboard"
+
+if ! $RAILWAY up --detach --yes "${RAILWAY_PROJECT_FLAGS[@]}"; then
+  error "Railway deploy failed."
+  echo ""
+  echo "  Common fixes:"
+  echo "  1. Use a Project Token (not account token) as RAILWAY_TOKEN"
+  echo "     Railway → Project → Settings → Tokens"
+  echo "  2. Or run first-time setup: npm run setup:deploy"
+  echo "  3. Do not set both RAILWAY_TOKEN and RAILWAY_API_TOKEN"
+  exit 1
+fi
 
 info "Waiting for API health check..."
 HEALTH_OK=false
