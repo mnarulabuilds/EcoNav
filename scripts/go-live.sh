@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Opens Railway setup for EcoNav — minimal steps to go live
+# Guided setup: Railway (API) + Vercel (Web) → www.econav.in
 set -euo pipefail
 
 GREEN='\033[0;32m'
@@ -10,92 +10,95 @@ NC='\033[0m'
 
 REPO="mnarulabuilds/EcoNav"
 RAILWAY_URL="https://railway.com/new/github?repo=${REPO}"
+VERCEL_URL="https://vercel.com/new"
 
 echo ""
-echo -e "${BOLD}EcoNav → www.econav.in${NC}"
+echo -e "${BOLD}EcoNav → www.econav.in${NC} (fresh setup)"
 echo ""
-echo -e "${CYAN}Your repo:${NC} https://github.com/${REPO}"
+echo -e "Full guide: ${CYAN}GO-LIVE.md${NC}"
 echo ""
 
-echo -e "${BOLD}STEP 1 — Connect Railway to GitHub (2 minutes)${NC}"
+# ── Part A: Railway API ───────────────────────────────────────────────────────
+echo -e "${BOLD}PART A — API on Railway${NC}"
 echo ""
-echo "  Opening Railway in your browser..."
-echo "  URL: ${RAILWAY_URL}"
+echo "  Opening: ${RAILWAY_URL}"
 echo ""
 
 if command -v open >/dev/null 2>&1; then
   open "$RAILWAY_URL" 2>/dev/null || true
-elif command -v xdg-open >/dev/null 2>&1; then
-  xdg-open "$RAILWAY_URL" 2>/dev/null || true
 fi
 
-echo "  In Railway:"
-echo "    1. Click ${BOLD}Deploy Now${NC} (or Configure GitHub → select EcoNav)"
-echo "    2. Rename the service to: ${BOLD}econav-api${NC}"
-echo "    3. Settings → Config file → set: ${BOLD}railway.api.json${NC}"
-echo "    4. Variables → Raw Editor → paste:"
+echo "  1. Click Deploy Now"
+echo "  2. Settings → name: econav-api"
+echo "  3. Settings → Config file: railway.api.json"
+echo "  4. Variables → paste:"
 echo ""
 echo -e "${YELLOW}NODE_ENV=production"
 echo "API_HOST=0.0.0.0"
 echo -e "CORS_ORIGINS=https://www.econav.in,https://econav.in${NC}"
 echo ""
-read -r -p "  Press ENTER when econav-api is deployed (green checkmark)..."
+echo "  5. Networking → Generate Domain"
+echo "  6. Test: curl https://YOUR-URL.up.railway.app/api/health"
+echo ""
+read -r -p "  Paste your Railway API URL (or press Enter to skip): " RAILWAY_API_URL
 
+if [[ -z "${RAILWAY_API_URL}" ]]; then
+  RAILWAY_API_URL="https://api.econav.in"
+  echo "  Using default: ${RAILWAY_API_URL}"
+fi
+
+# ── Part B: Vercel Web ────────────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}STEP 2 — Add Web service (2 minutes)${NC}"
+echo -e "${BOLD}PART B — Website on Vercel${NC}"
 echo ""
-echo "  In the same Railway project:"
-echo "    1. Click ${BOLD}+ Create${NC} → ${BOLD}GitHub Repo${NC} → EcoNav"
-echo "    2. Rename service to: ${BOLD}econav-web${NC}"
-echo "    3. Settings → Config file → set: ${BOLD}railway.web.json${NC}"
-echo "    4. Variables → Raw Editor → paste:"
+echo "  Opening: ${VERCEL_URL}"
 echo ""
-echo -e "${YELLOW}NODE_ENV=production"
-echo "NEXT_PUBLIC_API_URL=https://api.econav.in"
+
+if command -v open >/dev/null 2>&1; then
+  open "$VERCEL_URL" 2>/dev/null || true
+fi
+
+echo "  1. Import GitHub repo: EcoNav"
+echo "  2. Root Directory: apps/web"
+echo "  3. Environment variables:"
+echo ""
+echo -e "${YELLOW}NEXT_PUBLIC_API_URL=${RAILWAY_API_URL}"
 echo -e "NEXT_PUBLIC_MAP_TILE_URL=https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png${NC}"
 echo ""
-read -r -p "  Press ENTER when econav-web is deployed..."
+echo "  4. Deploy → then Settings → Domains → add www.econav.in"
+echo ""
+read -r -p "  Press ENTER when Vercel deploy is done..."
 
+# ── Part C: DNS ───────────────────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}STEP 3 — Custom domains${NC}"
+echo -e "${BOLD}PART C — DNS (domain registrar)${NC}"
 echo ""
-echo "  econav-api → Networking → add: ${BOLD}api.econav.in${NC}"
-echo "  econav-web → Networking → add: ${BOLD}www.econav.in${NC}"
+echo "  Add at your econav.in registrar:"
 echo ""
-echo "  Copy the CNAME targets Railway shows you."
+echo "    api   CNAME   → Railway target (Networking tab)"
+echo "    www   CNAME   → cname.vercel-dns.com"
+echo "    @     A       → 76.76.21.21"
 echo ""
-read -r -p "  Press ENTER when domains are added in Railway..."
+read -r -p "  Press ENTER after saving DNS records..."
 
+# ── Test ──────────────────────────────────────────────────────────────────────
 echo ""
-echo -e "${BOLD}STEP 4 — DNS (at your domain registrar)${NC}"
-echo ""
-echo "  Add these DNS records for econav.in:"
-echo ""
-echo "    api   CNAME   → (from Railway econav-api Networking tab)"
-echo "    www   CNAME   → (from Railway econav-web Networking tab)"
-echo ""
-echo -e "${YELLOW}Note: DNS for econav.in is not configured yet.${NC}"
-echo "  Until DNS propagates, use the *.up.railway.app URLs Railway gives you."
-echo ""
-read -r -p "  Press ENTER when DNS records are saved..."
-
-echo ""
-echo -e "${GREEN}▸ Testing...${NC}"
+echo -e "${BOLD}Testing...${NC}"
 echo ""
 
-if curl -sf --max-time 10 "https://api.econav.in/api/health" >/dev/null 2>&1; then
-  echo -e "  ${GREEN}✓${NC} API live at https://api.econav.in"
+if curl -sf --max-time 10 "${RAILWAY_API_URL}/api/health" >/dev/null 2>&1; then
+  echo -e "  ${GREEN}✓${NC} API responds at ${RAILWAY_API_URL}"
 else
-  echo -e "  ${YELLOW}!${NC} api.econav.in not reachable yet (DNS may still be propagating)"
-  echo "    Try the Railway *.up.railway.app URL from the Networking tab"
+  echo -e "  ${YELLOW}!${NC} API not reachable at ${RAILWAY_API_URL}"
 fi
 
 if curl -sf --max-time 10 "https://www.econav.in" >/dev/null 2>&1; then
-  echo -e "  ${GREEN}✓${NC} Web live at https://www.econav.in"
+  echo -e "  ${GREEN}✓${NC} www.econav.in is live!"
 else
-  echo -e "  ${YELLOW}!${NC} www.econav.in not reachable yet (DNS may still be propagating)"
+  echo -e "  ${YELLOW}!${NC} www.econav.in not ready yet (DNS can take 30 min)"
+  echo "    Use your *.vercel.app URL until DNS propagates"
 fi
 
 echo ""
-echo -e "${BOLD}Done!${NC} Open https://www.econav.in and click Plan Optimal Routes."
+echo -e "${BOLD}Done!${NC} See GO-LIVE.md if anything failed."
 echo ""

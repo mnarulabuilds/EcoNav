@@ -191,11 +191,15 @@ Copy `.env.example` to `.env`:
 
 ## Deploy to Production
 
-### Railway + GitHub (recommended)
+### Go live (start here)
 
-Connect your GitHub repo to Railway for auto-deploy on every push to `main`:
+**→ [GO-LIVE.md](GO-LIVE.md)** — Railway (API) + Vercel (Web) → `www.econav.in`
 
-**→ [RAILWAY-GITHUB.md](RAILWAY-GITHUB.md)** — full steps for `www.econav.in` + `api.econav.in`
+Or run the guided wizard:
+
+```bash
+npm run go-live
+```
 
 ### CLI deploy (alternative)
 
