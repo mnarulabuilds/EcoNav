@@ -34,20 +34,21 @@ fi
 # shellcheck disable=SC1091
 source .env.deploy
 
-if [[ -z "${VERCEL_TOKEN:-}" || -z "${RAILWAY_TOKEN:-}" ]]; then
-  error "VERCEL_TOKEN and RAILWAY_TOKEN required in .env.deploy"
+VERCEL_TOKEN=$(echo "${VERCEL_TOKEN:-}" | sed 's/^[[:space:]"'\'']*//;s/[[:space:]"'\'']*$//')
+
+if [[ -z "${VERCEL_TOKEN:-}" ]]; then
+  error "VERCEL_TOKEN required in .env.deploy"
   exit 1
 fi
 
 export VERCEL_TOKEN
 VERCEL="npx vercel"
-# Must use @railway/cli — the `railway` package is the TypeScript SDK, not the CLI
 RAILWAY="npx @railway/cli"
 
 # shellcheck disable=SC1091
 source "$ROOT/scripts/lib/railway-auth.sh"
-configure_railway_auth
-RAILWAY_PROJECT_FLAGS=( $(railway_project_args) )
+configure_railway_deploy
+RAILWAY_FLAGS=( $(railway_project_args) )
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
 info "Running tests..."
@@ -55,19 +56,16 @@ npm test --silent
 
 # ── Deploy API (Railway) ──────────────────────────────────────────────────────
 info "Deploying API → ${API_DOMAIN}..."
-cd "$ROOT"
 
-$RAILWAY variable set "CORS_ORIGINS=${CORS_ORIGINS}" --skip-deploys "${RAILWAY_PROJECT_FLAGS[@]}" 2>/dev/null \
+$RAILWAY variable set "CORS_ORIGINS=${CORS_ORIGINS}" --skip-deploys "${RAILWAY_FLAGS[@]}" 2>/dev/null \
   || warn "Could not update CORS_ORIGINS — set it manually in Railway dashboard"
 
-if ! $RAILWAY up --detach --yes "${RAILWAY_PROJECT_FLAGS[@]}"; then
+if ! $RAILWAY up --detach --yes "${RAILWAY_FLAGS[@]}"; then
   error "Railway deploy failed."
   echo ""
-  echo "  Common fixes:"
-  echo "  1. Use a Project Token (not account token) as RAILWAY_TOKEN"
-  echo "     Railway → Project → Settings → Tokens"
-  echo "  2. Or run first-time setup: npm run setup:deploy"
-  echo "  3. Do not set both RAILWAY_TOKEN and RAILWAY_API_TOKEN"
+  echo "  Verify in .env.deploy:"
+  echo "    RAILWAY_TOKEN      = Project → Settings → Tokens"
+  echo "    RAILWAY_PROJECT_ID = Project → Settings → General"
   exit 1
 fi
 

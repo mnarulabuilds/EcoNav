@@ -18,20 +18,36 @@ One-command deployment using **Vercel** (web) + **Railway** (API).
 | Vercel | https://vercel.com/account/tokens |
 | Railway | https://railway.com/account/tokens |
 
-### 2. Configure credentials
+### 2. Create a Railway project (if you don't have one)
+
+1. Go to https://railway.com/dashboard → **New Project** → **Empty Project**
+2. Name it `econav-api`
+3. Copy **Project ID** from Settings → General
+4. Create a **Project Token** from Settings → Tokens
+
+### 3. Configure credentials
 
 ```bash
 cp .env.deploy.example .env.deploy
-# Edit .env.deploy and paste VERCEL_TOKEN and RAILWAY_TOKEN
 ```
 
-### 3. Run setup (links projects + first deploy)
+Edit `.env.deploy`:
+
+```env
+VERCEL_TOKEN=...           # from vercel.com/account/tokens
+RAILWAY_PROJECT_ID=...     # from Railway → Project → Settings → General
+RAILWAY_TOKEN=...          # from Railway → Project → Settings → Tokens
+```
+
+> **Important:** `RAILWAY_TOKEN` must be a **Project Token**, not an account token from railway.com/account/tokens.
+
+### 4. Run setup (first deploy)
 
 ```bash
 npm run setup:deploy
 ```
 
-### 4. Configure DNS (at your domain registrar)
+### 5. Configure DNS (at your domain registrar)
 
 | Record | Type | Value |
 |--------|------|-------|
@@ -69,7 +85,8 @@ This will:
 | Web shows old API URL | Redeploy with `npm run deploy` |
 | Tests fail | Fix failing tests before deploy (deploy aborts on test failure) |
 | `railway/iac requires Railway CLI 5.42.1` | Fixed — scripts use `@railway/cli`, not the `railway` SDK package |
-| `Not signed in` on deploy | Use a **Project Token** as `RAILWAY_TOKEN` (Project → Settings → Tokens). Account tokens go in `RAILWAY_API_TOKEN` for setup only |
+| `Unauthorized` on setup/deploy | Use a **Project Token** as `RAILWAY_TOKEN` (Project → Settings → Tokens) plus `RAILWAY_PROJECT_ID`. Account tokens from railway.com/account/tokens will NOT work as `RAILWAY_TOKEN` |
+| `Not signed in` on deploy | Same as above — project token + project ID required |
 | `railway variables` fails | Fixed — CLI v5 uses `railway variable set` |
 
 ---
