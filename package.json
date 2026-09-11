@@ -1,0 +1,24 @@
+{
+  "name": "econav",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart city waste disposal route planner",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspace=@econav/api & npm run dev --workspace=@econav/web",
+    "dev:api": "npm run dev --workspace=@econav/api",
+    "dev:web": "npm run dev --workspace=@econav/web",
+    "dev:mobile": "npm run start --workspace=@econav/mobile",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
