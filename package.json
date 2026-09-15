@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspace=@econav/api & npm run dev --workspace=@econav/web",
+    "dev": "bash scripts/dev-local.sh",
     "dev:api": "npm run dev --workspace=@econav/api",
     "dev:web": "npm run dev --workspace=@econav/web",
     "dev:mobile": "npm run start --workspace=@econav/mobile",

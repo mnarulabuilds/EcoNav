@@ -98,6 +98,12 @@ button {
   min-height: 400px;
 }
 
+.map-loading {
+  height: 100%;
+  min-height: 400px;
+  background: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 100%);
+}
+
 .panel {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

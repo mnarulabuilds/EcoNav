@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, CircleMarker, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { CollectionSite, Depot, VehicleRoute } from '@econav/core';
@@ -58,22 +58,36 @@ export default function MapView({
   simulationPosition,
   onMapClick,
 }: MapViewProps) {
+  const [isMounted, setIsMounted] = useState(false);
+  const [mapKey] = useState(() => `map-${Math.random().toString(36).slice(2)}`);
+
   const center = useMemo(
     () => [depot.lat, depot.lng] as [number, number],
     [depot.lat, depot.lng],
   );
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+
     delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
       iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
       shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     });
-  }, []);
+  }, [isMounted]);
+
+  if (!isMounted) {
+    return <div className="map-loading" aria-hidden="true" />;
+  }
 
   return (
     <MapContainer
+      key={mapKey}
       center={center}
       zoom={11}
       style={{ height: '100%', width: '100%' }}

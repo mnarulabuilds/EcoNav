@@ -1,7 +1,7 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useState } from 'react';
+import MapView from './MapView';
 import type {
   CollectionSite,
   Depot,
@@ -17,8 +17,6 @@ import {
   DEFAULT_SITES,
   DEFAULT_VEHICLES,
 } from '@/lib/defaults';
-
-const MapView = dynamic(() => import('./MapView'), { ssr: false });
 
 type MapMode = 'depot' | 'site' | 'view';
 type AppTab = 'setup' | 'results' | 'simulation';
