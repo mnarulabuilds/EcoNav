@@ -2,7 +2,7 @@
   "name": "econav",
   "version": "1.0.0",
   "private": true,
-  "description": "Smart city waste disposal route planner",
+  "description": "CityConnect smart city platform — citizen services and municipal operations (EcoNav waste routing)",
   "license": "MIT",
   "workspaces": [
     "packages/*",
@@ -11,6 +11,12 @@
   "scripts": {
     "build": "npm run build --workspaces --if-present",
     "dev": "bash scripts/dev-local.sh",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "npm run migrate --workspace=@econav/db",
+    "db:seed": "npm run seed --workspace=@econav/db",
+    "db:prepare": "npm run build --workspace=@econav/db && npm run db:seed",
+    "dev:worker": "npm run worker:notifications --workspace=@econav/api",
     "dev:api": "npm run dev --workspace=@econav/api",
     "dev:web": "npm run dev --workspace=@econav/web",
     "dev:mobile": "npm run start --workspace=@econav/mobile",

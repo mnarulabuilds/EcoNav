@@ -1,8 +1,34 @@
-# EcoNav
+# CityConnect (EcoNav)
 
-**EcoNav** is a production-grade smart city waste disposal route planner. It helps government officials allocate vehicles, place collection sites on real-world maps, and compute optimal collection routes that minimize cost and time while respecting vehicle capacity constraints.
+**CityConnect** is a smart city platform for citizens and municipal officials. It combines citizen-facing services (civic grievances, schemes, health, waste/e-waste bookings, and more) with **EcoNav** waste route planning for operations teams.
 
-## Features
+## Platform modules (citizen web)
+
+| Module | Path |
+|--------|------|
+| Civic & grievances | `/citizen/civic` |
+| Waste & e-waste | `/citizen/waste` |
+| Schemes & benefits | `/citizen/schemes` |
+| Health, education, mobility, emergency, utilities, community, transparency | `/citizen/...` |
+
+**Official console:** `/admin` (dashboard, ticket queue), `/admin/waste-ops` (route planner).
+
+**Demo auth:** OTP `123456` — citizen `9999999999`, official `8888888888`, field `7777777777`.
+
+### Phase 2 — PostgreSQL persistence
+
+Tickets, pickups, sessions, community enrollment, and notification outbox are stored in **PostgreSQL** when `DATABASE_URL` is set.
+
+```bash
+cp .env.example .env
+npm run db:up          # Docker Postgres
+npm run db:prepare     # migrate + seed demo users
+npm run dev            # API + web + notification worker
+```
+
+Without Docker, set `DATABASE_URL` to your own Postgres or `PLATFORM_STORE=memory` for in-memory mode.
+
+## EcoNav waste operations
 
 - **Interactive map planning** — Place depot and collection sites on OpenStreetMap (web) or native maps (mobile)
 - **Capacitated route optimization** — Clarke-Wright Savings Algorithm with 2-opt improvement (CVRP)
@@ -17,10 +43,13 @@
 
 ```
 EcoNav/
-├── packages/core/     # Domain logic: CVRP solver, geo utils, simulation
-├── apps/api/          # Fastify REST API
-├── apps/web/          # Next.js web dashboard
-└── apps/mobile/       # Expo mobile app
+├── packages/core/            # CVRP solver, geo utils, simulation
+├── packages/platform/      # Smart city domain types & seed data
+├── packages/schemes-engine/ # Scheme eligibility rules
+├── packages/db/             # Drizzle ORM + PostgreSQL migrations
+├── apps/api/               # Fastify REST API (platform + /api/plan)
+├── apps/web/               # Next.js citizen portal & official console
+└── apps/mobile/            # Expo: citizen catalog + route planner
 ```
 
 ### Tech Stack
@@ -82,6 +111,20 @@ npm test
 ### `GET /api/health`
 
 Health check endpoint.
+
+### Platform API (`/api/v1/...`)
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/v1/platform/modules` | Service module catalog |
+| `POST /api/v1/auth/login` | Demo OTP login |
+| `GET /api/v1/schemes` | Scheme catalog |
+| `POST /api/v1/schemes/match` | Eligibility check |
+| `POST /api/v1/civic/tickets` | Submit civic report |
+| `POST /api/v1/waste/pickups` | Schedule waste/e-waste pickup |
+| `GET /api/v1/admin/dashboard` | Official KPIs (auth required) |
+
+See `apps/api/src/routes/platform.ts` for the full list.
 
 ### `POST /api/plan`
 

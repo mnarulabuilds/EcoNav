@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import MapView, { Marker, Polyline } from 'react-native-maps';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { planRoutes } from '../lib/api';
 import {
   DEFAULT_DEPOT,
@@ -95,8 +95,14 @@ export default function HomeScreen() {
         </Text>
       </View>
 
+      <Link href="/citizen" asChild>
+        <TouchableOpacity style={[styles.button, styles.buttonSecondary]}>
+          <Text style={styles.buttonText}>Citizen services</Text>
+        </TouchableOpacity>
+      </Link>
+
       <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+        style={[styles.button, loading && styles.buttonDisabled, { marginTop: 12 }]}
         onPress={handlePlan}
         disabled={loading}
       >
@@ -137,6 +143,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
+  },
+  buttonSecondary: {
+    backgroundColor: '#115e59',
+    marginBottom: 0,
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },

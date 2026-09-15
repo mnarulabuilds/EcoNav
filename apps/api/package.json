@@ -6,12 +6,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx watch src/server.ts",
+    "worker:notifications": "tsx src/worker/notifications.ts",
     "start": "node dist/server.js",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@econav/core": "*",
+    "@econav/platform": "*",
+    "@econav/schemes-engine": "*",
+    "@econav/db": "*",
     "@fastify/cors": "^10.0.1",
     "fastify": "^5.1.0",
     "zod": "^3.23.8"

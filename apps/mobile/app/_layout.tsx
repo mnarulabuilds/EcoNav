@@ -12,7 +12,8 @@ export default function RootLayout() {
           headerTitleStyle: { fontWeight: '700' },
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'EcoNav Planner' }} />
+        <Stack.Screen name="index" options={{ title: 'CityConnect' }} />
+        <Stack.Screen name="citizen" options={{ title: 'Citizen Services' }} />
         <Stack.Screen name="results" options={{ title: 'Route Results' }} />
         <Stack.Screen name="simulation" options={{ title: 'Simulation' }} />
       </Stack>
