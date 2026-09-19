@@ -18,6 +18,21 @@ export const hi: Messages = {
     officialConsole: 'अधिकारी कंसोल',
     allModules: 'सभी मॉड्यूल',
   },
+  modules: {
+    civic: 'नागरिक शिकायत',
+    waste: 'कचरा और ई-कचरा',
+    schemes: 'योजनाएँ और लाभ',
+    health: 'स्वास्थ्य',
+    education: 'शिक्षा और कौशल',
+    mobility: 'मोबिलिटी और पार्किंग',
+    emergency: 'आपातकाल',
+    utilities: 'उपयोगिताएँ',
+    community: 'समुदाय',
+    transparency: 'पारदर्शिता',
+    dashboard: 'डैशबोर्ड',
+    tickets: 'टिकट',
+    wasteOps: 'कचरा संचालन',
+  },
   common: {
     signOut: 'साइन आउट',
     signedInAs: 'साइन इन:',
@@ -28,6 +43,8 @@ export const hi: Messages = {
     language: 'भाषा',
     tryAgain: 'पुनः प्रयास करें',
     goHome: 'होम पर जाएँ',
+    skipToContent: 'सामग्री पर जाएँ',
+    loadMore: 'और लोड करें',
   },
   errors: {
     generic: 'कुछ गलत हुआ। कृपया पुनः प्रयास करें।',
@@ -36,6 +53,14 @@ export const hi: Messages = {
     forbidden: 'आपके पास इस क्रिया की अनुमति नहीं है।',
     validation: 'कृपया फ़ॉर्म की जाँच करें।',
     notFound: 'अनुरोधित जानकारी नहीं मिली।',
+  },
+  notFound: {
+    title: 'पृष्ठ नहीं मिला',
+    body: 'यह लिंक पुराना हो सकता है या पृष्ठ हटा दिया गया है।',
+  },
+  apiBanner: {
+    offline: 'CityConnect API तक पहुँच नहीं हो पा रही है। कनेक्शन या API जाँचें।',
+    devHint: 'स्थानीय:dev: npm run dev:api',
   },
   login: {
     title: 'साइन इन',

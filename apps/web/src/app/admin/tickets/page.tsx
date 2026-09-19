@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PlatformShell } from '@/components/PlatformShell';
 import { GuestGate } from '@/components/auth/GuestGate';
 import { useSession } from '@/components/useSession';
@@ -9,31 +9,49 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { fetchAdminTickets, updateTicketStatus } from '@/lib/platform-api';
 import type { ServiceTicket } from '@econav/platform';
+import { useI18n } from '@/i18n';
+import { resolveUserMessage } from '@/lib/errors';
 
 const STATUS_ACTIONS: ServiceTicket['status'][] = ['assigned', 'in_progress', 'resolved', 'escalated'];
 
 export default function AdminTicketsPage() {
   const { user, loading, setUser, logout } = useSession();
   const { push } = useToast();
+  const { t } = useI18n();
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [loadingList, setLoadingList] = useState(false);
 
-  async function load() {
-    const d = await fetchAdminTickets();
-    setTickets(d.tickets);
-  }
+  const load = useCallback(async (cursor?: string, append = false) => {
+    setLoadingList(true);
+    setListError(null);
+    try {
+      const d = await fetchAdminTickets({ limit: 50, cursor });
+      setTickets((prev) => (append ? [...prev, ...d.tickets] : d.tickets));
+      setNextCursor(d.nextCursor);
+    } catch (err) {
+      const msg = resolveUserMessage(err, t.errors);
+      setListError(msg);
+      push(msg, 'error');
+      if (!append) setTickets([]);
+    } finally {
+      setLoadingList(false);
+    }
+  }, [push, t.errors]);
 
   useEffect(() => {
     if (!user || user.role === 'citizen') return;
-    load().catch(() => setTickets([]));
-  }, [user]);
+    void load(undefined, false);
+  }, [user, load]);
 
   async function setStatus(id: string, status: ServiceTicket['status']) {
     try {
       await updateTicketStatus(id, status);
       push(`Ticket marked ${status.replace(/_/g, ' ')}`, 'success');
-      await load();
+      await load(undefined, false);
     } catch (err) {
-      push(err instanceof Error ? err.message : 'Update failed', 'error');
+      push(resolveUserMessage(err, t.errors), 'error');
     }
   }
 
@@ -51,44 +69,61 @@ export default function AdminTicketsPage() {
             Sign in with official demo phone 8888888888.
           </div>
         )}
-        {user && user.role !== 'citizen' && tickets.length === 0 && (
+        {listError && (
+          <div className="alert alert-error" role="alert">
+            {listError}
+          </div>
+        )}
+        {user && user.role !== 'citizen' && !loadingList && tickets.length === 0 && !listError && (
           <EmptyState
             title="No tickets in queue"
             description="Citizens can submit reports from the civic module."
           />
         )}
         {user && user.role !== 'citizen' && tickets.length > 0 && (
-          <ul className="data-list" aria-label="Service tickets">
-            {tickets.map((t) => (
-              <li key={t.id}>
-                <strong>{t.title}</strong> — {t.domain}/{t.category}
-                <div className="muted">{t.description}</div>
-                {t.location && (
-                  <div className="muted">
-                    Map: {t.location.lat.toFixed(5)}, {t.location.lng.toFixed(5)}
+          <>
+            <ul className="data-list" aria-label="Service tickets">
+              {tickets.map((ticket) => (
+                <li key={ticket.id}>
+                  <strong>{ticket.title}</strong> — {ticket.domain}/{ticket.category}
+                  <div className="muted">{ticket.description}</div>
+                  {ticket.location && (
+                    <div className="muted">
+                      Map: {ticket.location.lat.toFixed(5)}, {ticket.location.lng.toFixed(5)}
+                    </div>
+                  )}
+                  <StatusBadge status={ticket.status} />
+                  <div
+                    className="ticket-actions"
+                    role="group"
+                    aria-label={`Update status for ${ticket.title}`}
+                  >
+                    {STATUS_ACTIONS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        aria-label={`Set ${ticket.title} to ${s.replace(/_/g, ' ')}`}
+                        onClick={() => setStatus(ticket.id, s)}
+                      >
+                        {s.replace(/_/g, ' ')}
+                      </button>
+                    ))}
                   </div>
-                )}
-                <StatusBadge status={t.status} />
-                <div
-                  className="ticket-actions"
-                  role="group"
-                  aria-label={`Update status for ${t.title}`}
-                >
-                  {STATUS_ACTIONS.map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      aria-label={`Set ${t.title} to ${s.replace(/_/g, ' ')}`}
-                      onClick={() => setStatus(t.id, s)}
-                    >
-                      {s.replace(/_/g, ' ')}
-                    </button>
-                  ))}
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+            {nextCursor && (
+              <button
+                type="button"
+                className="btn btn-secondary"
+                disabled={loadingList}
+                onClick={() => load(nextCursor, true)}
+              >
+                {loadingList ? t.common.loading : t.common.loadMore}
+              </button>
+            )}
+          </>
         )}
       </GuestGate>
     </PlatformShell>

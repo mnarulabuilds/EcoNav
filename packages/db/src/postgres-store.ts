@@ -1,6 +1,16 @@
-import { and, desc, eq, gt, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, gt, lt, notInArray, or, sql } from 'drizzle-orm';
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { SLA_HOURS, type PickupBooking, type ServiceTicket, type TicketDomain, type TicketStatus } from '@econav/platform';
+import {
+  SEED_SCHEMES,
+  SEED_WARDS,
+  SLA_HOURS,
+  type AdminDashboardStats,
+  type PickupBooking,
+  type PlatformUser,
+  type ServiceTicket,
+  type TicketDomain,
+  type TicketStatus,
+} from '@econav/platform';
 import * as schema from './schema.js';
 import { mapCommunityEvent, mapPickup, mapTicket, mapUser } from './mappers.js';
 
@@ -42,18 +52,138 @@ export class PostgresPlatformStore {
     return rows[0] ? mapUser(rows[0].user) : undefined;
   }
 
-  async listTickets(filter?: { domain?: TicketDomain; reporterId?: string }) {
+  async revokeSession(token: string) {
+    const clean = token.replace(/^Bearer\s+/i, '');
+    await this.db.delete(schema.authSessions).where(eq(schema.authSessions.token, clean));
+  }
+
+  async revokeAllSessionsForUser(userId: string) {
+    await this.db.delete(schema.authSessions).where(eq(schema.authSessions.userId, userId));
+  }
+
+  async updateUserPreferredLanguage(userId: string, language: PlatformUser['preferredLanguage']) {
+    await this.db
+      .update(schema.users)
+      .set({ preferredLanguage: language })
+      .where(eq(schema.users.id, userId));
+    const row = await this.db.select().from(schema.users).where(eq(schema.users.id, userId)).limit(1);
+    return row[0] ? mapUser(row[0]) : undefined;
+  }
+
+  async listTickets(filter?: {
+    domain?: TicketDomain;
+    reporterId?: string;
+    limit?: number;
+    cursor?: string;
+  }) {
+    const limit = Math.min(filter?.limit ?? 50, 100);
     const conditions = [];
     if (filter?.domain) conditions.push(eq(schema.serviceTickets.domain, filter.domain));
     if (filter?.reporterId) conditions.push(eq(schema.serviceTickets.reporterId, filter.reporterId));
+
+    if (filter?.cursor) {
+      const cur = await this.db
+        .select()
+        .from(schema.serviceTickets)
+        .where(eq(schema.serviceTickets.id, filter.cursor))
+        .limit(1);
+      if (cur[0]) {
+        conditions.push(
+          or(
+            lt(schema.serviceTickets.createdAt, cur[0].createdAt),
+            and(
+              eq(schema.serviceTickets.createdAt, cur[0].createdAt),
+              lt(schema.serviceTickets.id, filter.cursor),
+            ),
+          )!,
+        );
+      }
+    }
 
     const rows = await this.db
       .select()
       .from(schema.serviceTickets)
       .where(conditions.length ? and(...conditions) : undefined)
-      .orderBy(desc(schema.serviceTickets.createdAt));
+      .orderBy(desc(schema.serviceTickets.createdAt), desc(schema.serviceTickets.id))
+      .limit(limit + 1);
 
-    return rows.map(mapTicket);
+    const hasMore = rows.length > limit;
+    const page = rows.slice(0, limit).map(mapTicket);
+    return {
+      tickets: page,
+      nextCursor: hasMore && page.length > 0 ? page[page.length - 1]!.id : null,
+    };
+  }
+
+  async getDashboardStats(): Promise<AdminDashboardStats> {
+    const openRows = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.serviceTickets)
+      .where(notInArray(schema.serviceTickets.status, ['resolved', 'closed']));
+    const openTickets = openRows[0]?.count ?? 0;
+
+    const breachRows = await this.db.execute(sql`
+      SELECT count(*)::int AS count FROM service_tickets
+      WHERE status NOT IN ('resolved', 'closed')
+      AND (extract(epoch from now()) - extract(epoch from created_at::timestamptz)) / 3600 > sla_hours
+    `);
+    const slaBreaches = Number((breachRows.rows[0] as { count?: number } | undefined)?.count ?? 0);
+
+    const weekRows = await this.db.execute(sql`
+      SELECT count(*)::int AS count FROM service_tickets
+      WHERE resolved_at IS NOT NULL
+      AND resolved_at::timestamptz >= now() - interval '7 days'
+    `);
+    const resolvedThisWeek = Number((weekRows.rows[0] as { count?: number } | undefined)?.count ?? 0);
+
+    const domainRows = await this.db
+      .select({
+        domain: schema.serviceTickets.domain,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.serviceTickets)
+      .groupBy(schema.serviceTickets.domain);
+
+    const ticketsByDomain = {} as AdminDashboardStats['ticketsByDomain'];
+    for (const row of domainRows) {
+      ticketsByDomain[row.domain as TicketDomain] = row.count;
+    }
+
+    const wardCounts = await this.db
+      .select({
+        wardId: schema.serviceTickets.wardId,
+        count: sql<number>`count(*)::int`,
+      })
+      .from(schema.serviceTickets)
+      .groupBy(schema.serviceTickets.wardId);
+
+    const wardMap = new Map(wardCounts.map((r) => [r.wardId, r.count]));
+    const ticketsByWard = SEED_WARDS.map((w) => ({
+      wardId: w.id,
+      wardName: w.name,
+      count: wardMap.get(w.id) ?? 0,
+    }));
+
+    const pickupRows = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.pickupBookings)
+      .where(eq(schema.pickupBookings.status, 'requested'));
+    const pendingPickups = pickupRows[0]?.count ?? 0;
+
+    const eventRows = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(schema.communityEvents);
+
+    return {
+      openTickets,
+      slaBreaches,
+      resolvedThisWeek,
+      activeSchemes: SEED_SCHEMES.filter((s) => s.active).length,
+      pendingPickups,
+      communityEvents: eventRows[0]?.count ?? 0,
+      ticketsByDomain,
+      ticketsByWard,
+    };
   }
 
   async createTicket(input: {

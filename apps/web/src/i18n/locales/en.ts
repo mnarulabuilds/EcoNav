@@ -16,6 +16,21 @@ export const en = {
     officialConsole: 'Official console',
     allModules: 'All modules',
   },
+  modules: {
+    civic: 'Civic & grievances',
+    waste: 'Waste & e-waste',
+    schemes: 'Schemes & benefits',
+    health: 'Health & wellness',
+    education: 'Education & skills',
+    mobility: 'Mobility & parking',
+    emergency: 'Emergency & safety',
+    utilities: 'Utilities & environment',
+    community: 'Community',
+    transparency: 'Transparency',
+    dashboard: 'Dashboard',
+    tickets: 'Tickets',
+    wasteOps: 'Waste operations',
+  },
   common: {
     signOut: 'Sign out',
     signedInAs: 'Signed in as',
@@ -26,6 +41,8 @@ export const en = {
     language: 'Language',
     tryAgain: 'Try again',
     goHome: 'Go home',
+    skipToContent: 'Skip to content',
+    loadMore: 'Load more',
   },
   errors: {
     generic: 'Something went wrong. Please try again.',
@@ -34,6 +51,14 @@ export const en = {
     forbidden: 'You do not have permission for this action.',
     validation: 'Please check the form and fix highlighted fields.',
     notFound: 'The requested resource was not found.',
+  },
+  notFound: {
+    title: 'Page not found',
+    body: 'This link may be outdated or the page was moved.',
+  },
+  apiBanner: {
+    offline: 'Cannot reach the CityConnect API. Check that the API is running or your network connection.',
+    devHint: 'Local dev: run npm run dev:api',
   },
   login: {
     title: 'Sign in',

@@ -1,13 +1,16 @@
 import {
   SEED_COMMUNITY,
+  SEED_SCHEMES,
+  SEED_WARDS,
   SLA_HOURS,
+  type AdminDashboardStats,
   type PickupBooking,
   type PlatformUser,
   type ServiceTicket,
   type TicketDomain,
   type TicketStatus,
 } from '@econav/platform';
-import type { PlatformStore } from './types.js';
+import type { PlatformStore, TicketListFilter, TicketListResult } from './types.js';
 
 function id(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -54,11 +57,85 @@ export class MemoryPlatformStore implements PlatformStore {
     return this.users.find((u) => u.id === userId);
   }
 
-  async listTickets(filter?: { domain?: TicketDomain; reporterId?: string }): Promise<ServiceTicket[]> {
+  async revokeSession(token: string): Promise<void> {
+    const clean = token.replace(/^Bearer\s+/i, '');
+    this.sessions.delete(clean);
+  }
+
+  async revokeAllSessionsForUser(userId: string): Promise<void> {
+    for (const [tok, uid] of this.sessions) {
+      if (uid === userId) this.sessions.delete(tok);
+    }
+  }
+
+  async updateUserPreferredLanguage(
+    userId: string,
+    language: PlatformUser['preferredLanguage'],
+  ): Promise<PlatformUser | undefined> {
+    const user = this.users.find((u) => u.id === userId);
+    if (!user) return undefined;
+    user.preferredLanguage = language;
+    return user;
+  }
+
+  async listTickets(filter?: TicketListFilter): Promise<TicketListResult> {
     let list = [...this.tickets];
     if (filter?.domain) list = list.filter((t) => t.domain === filter.domain);
     if (filter?.reporterId) list = list.filter((t) => t.reporterId === filter.reporterId);
-    return list;
+    list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    if (filter?.cursor) {
+      const idx = list.findIndex((t) => t.id === filter.cursor);
+      list = idx >= 0 ? list.slice(idx + 1) : list;
+    }
+
+    const limit = Math.min(filter?.limit ?? 50, 100);
+    const page = list.slice(0, limit);
+    const hasMore = list.length > limit;
+    return {
+      tickets: page,
+      nextCursor: hasMore && page.length > 0 ? page[page.length - 1]!.id : null,
+    };
+  }
+
+  async getDashboardStats(): Promise<AdminDashboardStats> {
+    const tickets = this.tickets;
+    const pickups = this.pickups;
+    const events = this.communityEvents;
+    const now = Date.now();
+    const openTickets = tickets.filter((t) => !['resolved', 'closed'].includes(t.status)).length;
+    const slaBreaches = tickets.filter((t) => {
+      if (['resolved', 'closed'].includes(t.status)) return false;
+      const ageHours = (now - new Date(t.createdAt).getTime()) / 3_600_000;
+      return ageHours > t.slaHours;
+    }).length;
+    const weekAgo = now - 7 * 24 * 3_600_000;
+    const resolvedThisWeek = tickets.filter((t) => {
+      if (!t.resolvedAt) return false;
+      return new Date(t.resolvedAt).getTime() >= weekAgo;
+    }).length;
+
+    const ticketsByDomain = {} as AdminDashboardStats['ticketsByDomain'];
+    for (const t of tickets) {
+      ticketsByDomain[t.domain] = (ticketsByDomain[t.domain] ?? 0) + 1;
+    }
+
+    const ticketsByWard = SEED_WARDS.map((w) => ({
+      wardId: w.id,
+      wardName: w.name,
+      count: tickets.filter((t) => t.wardId === w.id).length,
+    }));
+
+    return {
+      openTickets,
+      slaBreaches,
+      resolvedThisWeek,
+      activeSchemes: SEED_SCHEMES.filter((s) => s.active).length,
+      pendingPickups: pickups.filter((p) => p.status === 'requested').length,
+      communityEvents: events.length,
+      ticketsByDomain,
+      ticketsByWard,
+    };
   }
 
   async createTicket(input: {

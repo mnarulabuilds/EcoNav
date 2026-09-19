@@ -37,6 +37,11 @@ set +a
 [[ "${PUBLIC_WEB_DOMAIN:-}" == "${WEB_DOMAIN}" ]] || fail "PUBLIC_WEB_DOMAIN should be ${WEB_DOMAIN}"
 [[ "${PUBLIC_API_DOMAIN:-}" == "${API_DOMAIN}" ]] || fail "PUBLIC_API_DOMAIN should be ${API_DOMAIN}"
 
+if [[ "${ALLOW_DEMO_OTP:-true}" == "true" && "${PREFLIGHT_ALLOW_DEMO_OTP:-false}" != "true" ]]; then
+  echo -e "${RED}✗${NC} ALLOW_DEMO_OTP=true is unsafe for public production (https://${WEB_DOMAIN}). Set ALLOW_DEMO_OTP=false for go-live, or PREFLIGHT_ALLOW_DEMO_OTP=true only for a controlled pilot." >&2
+  exit 1
+fi
+
 command -v docker >/dev/null 2>&1 || fail "Docker is required on the deploy host"
 docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 is required"
 

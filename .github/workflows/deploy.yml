@@ -9,6 +9,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cityconnect
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: cityconnect_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cityconnect -d cityconnect_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,10 +31,17 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build --workspace=@econav/core
+      - run: npm run build --workspace=@econav/sdk
       - run: npm run typecheck --workspaces --if-present
       - run: npm run lint --workspaces --if-present
-      - run: npm run build --workspace=@econav/web
+      - run: npm run build
       - run: npm run test:coverage
+        env:
+          DATABASE_URL_TEST: postgres://cityconnect:test@localhost:5432/cityconnect_test
+      - name: Install Playwright
+        run: npx playwright install chromium --with-deps
+      - name: E2E smoke
+        run: npm run test:e2e
 
   docker-build:
     runs-on: ubuntu-latest

@@ -38,8 +38,13 @@ export default function CivicPage() {
 
   useEffect(() => {
     if (!user) return;
-    fetchCivicTickets().then((d) => setTickets(d.tickets)).catch(() => setTickets([]));
-  }, [user]);
+    fetchCivicTickets()
+      .then((d) => setTickets(d.tickets))
+      .catch((err) => {
+        push(resolveUserMessage(err, t.errors), 'error');
+        setTickets([]);
+      });
+  }, [user, push, t.errors]);
 
   useEffect(() => {
     setPin(null);

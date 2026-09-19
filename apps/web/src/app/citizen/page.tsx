@@ -1,22 +1,20 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { PlatformShell } from '@/components/PlatformShell';
 import { LoginPanel } from '@/components/LoginPanel';
 import { useSession } from '@/components/useSession';
 import { fetchModules } from '@/lib/platform-api';
-import type { PlatformModuleMeta } from '@econav/platform';
+import { useApiQuery } from '@/hooks/useApiQuery';
+import { PageLoader } from '@/components/ui/PageLoader';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function CitizenHomePage() {
   const { user, loading, setUser, logout } = useSession();
-  const [modules, setModules] = useState<PlatformModuleMeta[]>([]);
-
-  useEffect(() => {
-    fetchModules()
-      .then((data) => setModules(data.modules))
-      .catch(() => setModules([]));
-  }, []);
+  const fetcher = useCallback(() => fetchModules(), []);
+  const { data, loading: loadingModules, error } = useApiQuery(fetcher, []);
+  const modules = data?.modules ?? [];
 
   return (
     <PlatformShell
@@ -37,15 +35,21 @@ export default function CitizenHomePage() {
         </p>
       )}
 
-      <div className="landing-grid">
-        {modules.map((mod) => (
-          <Link key={mod.id} href={mod.citizenPath} className="module-card">
-            <div className="icon">{mod.icon}</div>
-            <h3>{mod.title}</h3>
-            <p>{mod.description}</p>
-          </Link>
-        ))}
-      </div>
+      {loadingModules && <PageLoader label="Loading services…" />}
+      {!loadingModules && error && (
+        <EmptyState title="Could not load services" description={error} />
+      )}
+      {!loadingModules && !error && (
+        <div className="landing-grid">
+          {modules.map((mod) => (
+            <Link key={mod.id} href={mod.citizenPath} className="module-card">
+              <div className="icon">{mod.icon}</div>
+              <h3>{mod.title}</h3>
+              <p>{mod.description}</p>
+            </Link>
+          ))}
+        </div>
+      )}
     </PlatformShell>
   );
 }

@@ -1,12 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { PlatformShell } from '@/components/PlatformShell';
 import { fetchModules, fetchSchemes, matchSchemes } from '@/lib/platform-api';
 import type { GovernmentScheme, Ward } from '@econav/platform';
+import { useToast } from '@/components/ui/Toast';
+import { useI18n } from '@/i18n';
+import { resolveUserMessage } from '@/lib/errors';
 
 export default function SchemesPage() {
+  const { push } = useToast();
+  const { t } = useI18n();
   const [schemes, setSchemes] = useState<GovernmentScheme[]>([]);
+  const [matching, setMatching] = useState(false);
+  const [matchError, setMatchError] = useState<string | null>(null);
   const [wards, setWards] = useState<Ward[]>([]);
   const [results, setResults] = useState<
     { scheme: GovernmentScheme; match: { eligible: boolean; reasons: string[] } }[] | null
@@ -21,15 +28,34 @@ export default function SchemesPage() {
     wardId: 'ward-1',
   });
 
+  const loadCatalog = useCallback(async () => {
+    try {
+      const [schemeData, moduleData] = await Promise.all([fetchSchemes(), fetchModules()]);
+      setSchemes(schemeData.schemes);
+      setWards(moduleData.wards);
+    } catch (err) {
+      push(resolveUserMessage(err, t.errors), 'error');
+    }
+  }, [push, t.errors]);
+
   useEffect(() => {
-    fetchSchemes().then((d) => setSchemes(d.schemes)).catch(() => undefined);
-    fetchModules().then((d) => setWards(d.wards)).catch(() => undefined);
-  }, []);
+    void loadCatalog();
+  }, [loadCatalog]);
 
   async function checkEligibility(e: React.FormEvent) {
     e.preventDefault();
-    const data = await matchSchemes(profile);
-    setResults(data.results);
+    setMatching(true);
+    setMatchError(null);
+    try {
+      const data = await matchSchemes(profile);
+      setResults(data.results);
+    } catch (err) {
+      const msg = resolveUserMessage(err, t.errors);
+      setMatchError(msg);
+      push(msg, 'error');
+    } finally {
+      setMatching(false);
+    }
   }
 
   return (
@@ -93,8 +119,13 @@ export default function SchemesPage() {
             />{' '}
             Person with disability (certificate on file)
           </label>
-          <button type="submit" className="btn btn-primary">
-            Match schemes
+          {matchError && (
+            <p className="form-error" role="alert">
+              {matchError}
+            </p>
+          )}
+          <button type="submit" className="btn btn-primary" disabled={matching}>
+            {matching ? t.common.loading : 'Match schemes'}
           </button>
         </form>
         <div className="panel">

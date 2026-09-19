@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ApiError } from './api-client';
+import { ApiError } from '@econav/sdk';
 import { resolveUserMessage } from './errors';
 import { en } from '../i18n/locales/en';
 

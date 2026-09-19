@@ -1,4 +1,4 @@
-import { ApiError } from './api-client';
+import { ApiError } from '@econav/sdk';
 import type { Messages } from '@/i18n/locales/en';
 
 export function resolveUserMessage(error: unknown, t: Messages['errors']): string {

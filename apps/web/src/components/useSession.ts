@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { PlatformUser } from '@econav/platform';
+import { logoutWithCookie } from '@/lib/auth-api';
 import { fetchMe } from '@/lib/platform-api';
 
 export function useSession() {
@@ -23,8 +24,8 @@ export function useSession() {
     void refresh();
   }, [refresh]);
 
-  function logout() {
-    localStorage.removeItem('cityconnect_token');
+  async function logout() {
+    await logoutWithCookie().catch(() => undefined);
     setUser(null);
   }
 

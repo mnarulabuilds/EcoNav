@@ -39,6 +39,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = locale === 'hi' ? 'hi' : 'en';
+    document.body.classList.toggle('locale-hi', locale === 'hi');
   }, [locale]);
 
   const value = useMemo(

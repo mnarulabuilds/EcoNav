@@ -32,6 +32,11 @@ body {
   color: var(--color-text);
 }
 
+html[lang='hi'] body,
+body.locale-hi {
+  font-family: var(--font-devanagari), var(--font-sans);
+}
+
 button,
 input,
 select {

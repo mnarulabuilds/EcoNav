@@ -1,10 +1,13 @@
 import type { RoutePlanInput, RoutePlanResult, SimulationTimeline } from '@econav/core';
 import Constants from 'expo-constants';
+import { configureApiClient, requestJson } from '@econav/sdk';
 
 const API_URL =
   Constants.expoConfig?.extra?.apiUrl ??
   process.env.EXPO_PUBLIC_API_URL ??
   'http://localhost:3001';
+
+configureApiClient({ getBaseUrl: () => API_URL });
 
 export interface PlanResponse {
   plan: RoutePlanResult;
@@ -12,16 +15,8 @@ export interface PlanResponse {
 }
 
 export async function planRoutes(input: RoutePlanInput): Promise<PlanResponse> {
-  const response = await fetch(`${API_URL}/api/plan`, {
+  return requestJson<PlanResponse>('/api/plan', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error ?? `HTTP ${response.status}`);
-  }
-
-  return response.json();
 }

@@ -144,7 +144,14 @@ Internet → Caddy (:443)
                     └─ worker (notifications)
 ```
 
-Browser calls `https://api.cityconnect.in` from `https://www.cityconnect.in`; API validates `Origin` against `CORS_ORIGINS`.
+Browsers use **Next.js BFF** routes (`/api/bff/*`) with **httpOnly session cookies**; the web container calls `http://api:3001` server-side (`API_INTERNAL_URL`). Direct API access remains at `https://api.cityconnect.in` for mobile and integrations; validate `Origin` against `CORS_ORIGINS`.
+
+### Peak traffic & Postgres pools
+
+- Set **`PG_POOL_MAX`** per API replica so `PG_POOL_MAX × API_replicas < postgres max_connections` (leave headroom for worker/admin).
+- Scale **stateless API** containers horizontally; keep **one Postgres** primary (read replica optional for reporting).
+- Admin dashboard uses **SQL aggregates**; ticket lists are **paginated** (`limit` + `cursor`) — avoid unbounded `listTickets` in new features.
+- Tune **`RATE_LIMIT_*`** when adding edge replicas so citizens are not throttled unfairly.
 
 ---
 

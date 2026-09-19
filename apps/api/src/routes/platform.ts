@@ -11,9 +11,7 @@ import {
   SEED_TRANSPARENCY,
   SEED_UTILITY_TYPES,
   SEED_WARDS,
-  type AdminDashboardStats,
   type CitizenProfile,
-  type TicketDomain,
 } from '@econav/platform';
 import { z } from 'zod';
 import { isDemoOtpLoginEnabled, verifyDemoOtp } from '../auth-config.js';
@@ -23,7 +21,27 @@ import { getPlatformStore } from '../store/index.js';
 const loginSchema = z.object({
   phone: z.string().min(10).max(15),
   otp: z.string().min(4).max(8),
+  preferredLanguage: z.enum(['en', 'hi']).optional(),
 });
+
+const ticketListQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  cursor: z.string().min(1).optional(),
+});
+
+const adminTicketPatchSchema = z
+  .object({
+    status: z.enum([
+      'submitted',
+      'assigned',
+      'in_progress',
+      'resolved',
+      'closed',
+      'escalated',
+    ]),
+    assigneeId: z.string().min(1).optional(),
+  })
+  .strict();
 
 const ticketSchema = z.object({
   domain: z.enum([
@@ -65,48 +83,8 @@ const pickupSchema = z.object({
   scheduledDate: z.string().min(4),
 });
 
-async function computeDashboardStats(): Promise<AdminDashboardStats> {
-  const store = getPlatformStore();
-  const tickets = await store.listTickets();
-  const pickups = await store.listPickups();
-  const events = await store.listCommunityEvents();
-
-  const openTickets = tickets.filter((t) => !['resolved', 'closed'].includes(t.status)).length;
-
-  const now = Date.now();
-  const slaBreaches = tickets.filter((t) => {
-    if (['resolved', 'closed'].includes(t.status)) return false;
-    const ageHours = (now - new Date(t.createdAt).getTime()) / 3_600_000;
-    return ageHours > t.slaHours;
-  }).length;
-
-  const weekAgo = now - 7 * 24 * 3_600_000;
-  const resolvedThisWeek = tickets.filter((t) => {
-    if (!t.resolvedAt) return false;
-    return new Date(t.resolvedAt).getTime() >= weekAgo;
-  }).length;
-
-  const ticketsByDomain = {} as Record<TicketDomain, number>;
-  for (const t of tickets) {
-    ticketsByDomain[t.domain] = (ticketsByDomain[t.domain] ?? 0) + 1;
-  }
-
-  const ticketsByWard = SEED_WARDS.map((w) => ({
-    wardId: w.id,
-    wardName: w.name,
-    count: tickets.filter((t) => t.wardId === w.id).length,
-  }));
-
-  return {
-    openTickets,
-    slaBreaches,
-    resolvedThisWeek,
-    activeSchemes: SEED_SCHEMES.filter((s) => s.active).length,
-    pendingPickups: pickups.filter((p) => p.status === 'requested').length,
-    communityEvents: events.length,
-    ticketsByDomain,
-    ticketsByWard,
-  };
+function parseTicketListQuery(request: { query: unknown }) {
+  return ticketListQuerySchema.safeParse(request.query);
 }
 
 export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
@@ -137,7 +115,7 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
       });
     }
 
-    const { phone, otp } = parsed.data;
+    const { phone, otp, preferredLanguage } = parsed.data;
     if (!verifyDemoOtp(otp)) {
       return reply.status(401).send({ error: 'Invalid OTP. Use demo OTP 123456.' });
     }
@@ -151,10 +129,24 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
       });
     }
 
+    await store.revokeAllSessionsForUser(user.id);
     const token = await store.createSession(user.id);
-    return { token, user };
+    let updatedUser = user;
+    if (preferredLanguage) {
+      updatedUser = (await store.updateUserPreferredLanguage(user.id, preferredLanguage)) ?? user;
+    }
+    return { token, user: updatedUser };
     },
   );
+
+  fastify.post('/api/v1/auth/logout', async (request, reply) => {
+    const user = await getAuthUser(request);
+    const header = request.headers.authorization;
+    const token = typeof header === 'string' ? header.replace(/^Bearer\s+/i, '') : undefined;
+    if (token) await getPlatformStore().revokeSession(token);
+    if (!user && !token) return reply.status(401).send({ error: 'Not authenticated' });
+    return { ok: true };
+  });
 
   fastify.get('/api/v1/auth/me', async (request, reply) => {
     const user = await getAuthUser(request);
@@ -162,14 +154,19 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
     return { user };
   });
 
-  fastify.get('/api/v1/civic/tickets', async (request) => {
+  fastify.get('/api/v1/civic/tickets', async (request, reply) => {
+    const query = parseTicketListQuery(request);
+    if (!query.success) {
+      return reply.status(400).send({ error: 'Invalid query', details: query.error.flatten() });
+    }
     const user = await getAuthUser(request);
     const store = getPlatformStore();
-    const tickets = await store.listTickets({
+    return store.listTickets({
       domain: 'civic',
       reporterId: user?.role === 'citizen' ? user.id : undefined,
+      limit: query.data.limit,
+      cursor: query.data.cursor,
     });
-    return { tickets };
   });
 
   fastify.post('/api/v1/civic/tickets', async (request, reply) => {
@@ -298,14 +295,23 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
     '/api/v1/admin/dashboard',
     { preHandler: requireAuth(['official', 'field_staff']) },
     async () => ({
-      stats: await computeDashboardStats(),
+      stats: await getPlatformStore().getDashboardStats(),
     }),
   );
 
   fastify.get(
     '/api/v1/admin/tickets',
     { preHandler: requireAuth(['official', 'field_staff']) },
-    async () => ({ tickets: await getPlatformStore().listTickets() }),
+    async (request, reply) => {
+      const query = parseTicketListQuery(request);
+      if (!query.success) {
+        return reply.status(400).send({ error: 'Invalid query', details: query.error.flatten() });
+      }
+      return getPlatformStore().listTickets({
+        limit: query.data.limit,
+        cursor: query.data.cursor,
+      });
+    },
   );
 
   fastify.patch(
@@ -313,25 +319,16 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
     { preHandler: requireAuth(['official', 'field_staff']) },
     async (request, reply) => {
       const { id } = request.params as { id: string };
-      const body = request.body as { status?: string; assigneeId?: string };
-      const status = body.status as
-        | 'submitted'
-        | 'assigned'
-        | 'in_progress'
-        | 'resolved'
-        | 'closed'
-        | 'escalated'
-        | undefined;
-
-      if (!status) {
-        return reply.status(400).send({ error: 'status is required' });
+      const parsed = adminTicketPatchSchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: 'Validation failed', details: parsed.error.flatten() });
       }
 
       const user = await getAuthUser(request);
       const ticket = await getPlatformStore().updateTicketStatus(
         id,
-        status,
-        body.assigneeId ?? user?.id,
+        parsed.data.status,
+        parsed.data.assigneeId ?? user?.id,
       );
       if (!ticket) return reply.status(404).send({ error: 'Ticket not found' });
       return { ticket };

@@ -3,7 +3,8 @@ import type {
   RoutePlanResult,
   SimulationTimeline,
 } from '@econav/core';
-import { requestJson } from './api-client';
+import '@/lib/sdk-config';
+import { requestJson } from '@econav/sdk';
 
 export interface PlanResponse {
   plan: RoutePlanResult;
@@ -15,13 +16,4 @@ export async function planRoutes(input: RoutePlanInput): Promise<PlanResponse> {
     method: 'POST',
     body: JSON.stringify(input),
   });
-}
-
-export async function checkHealth(): Promise<boolean> {
-  try {
-    await requestJson<{ status: string }>('/api/health');
-    return true;
-  } catch {
-    return false;
-  }
 }

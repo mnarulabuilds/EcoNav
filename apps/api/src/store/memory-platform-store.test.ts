@@ -33,7 +33,7 @@ describe('MemoryPlatformStore', () => {
     expect(ticket.location).toEqual({ lat: 28.61, lng: 77.21 });
 
     const listed = await store.listTickets({ domain: 'civic', reporterId: citizen.id });
-    expect(listed.some((t) => t.id === ticket.id)).toBe(true);
+    expect(listed.tickets.some((t) => t.id === ticket.id)).toBe(true);
 
     const updated = await store.updateTicketStatus(ticket.id, 'resolved', 'user-official-1');
     expect(updated?.status).toBe('resolved');

@@ -3,9 +3,20 @@ import { initPlatformStore, shutdownPlatformStore, getPlatformStore } from '../s
 const INTERVAL_MS = Number(process.env.NOTIFICATION_POLL_MS ?? 15_000);
 
 async function tick() {
-  const processed = await getPlatformStore().processPendingNotifications();
-  if (processed > 0) {
-    console.log(`[notifications] marked ${processed} message(s) as sent (demo — no external SMS)`);
+  try {
+    const processed = await getPlatformStore().processPendingNotifications();
+    if (processed > 0) {
+      console.log(
+        JSON.stringify({
+          level: 'info',
+          msg: 'notifications_processed',
+          count: processed,
+          note: 'Demo worker — integrate MSG91/Twilio for production SMS',
+        }),
+      );
+    }
+  } catch (err) {
+    console.error(JSON.stringify({ level: 'error', msg: 'notification_tick_failed', err: String(err) }));
   }
 }
 

@@ -9,7 +9,8 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=@econav/sdk && npm run build --workspaces --if-present",
+    "prepare": "node scripts/prepare-husky.mjs",
     "dev": "bash scripts/dev-local.sh",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
@@ -22,6 +23,7 @@
     "dev:mobile": "npm run start --workspace=@econav/mobile",
     "test": "vitest run --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
+    "test:e2e": "playwright test",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "check": "npm run typecheck && npm run lint && npm run test:coverage",
@@ -37,9 +39,16 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.51.0",
     "@railway/cli": "^5.52.1",
     "@vitest/coverage-v8": "^2.1.9",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
     "vercel": "^41.0.0",
     "vitest": "^2.1.9"
+  },
+  "lint-staged": {
+    "apps/web/**/*.{ts,tsx}": "eslint --max-warnings=0 -c apps/web/.eslintrc.json",
+    "apps/api/**/*.ts": "eslint --max-warnings=0"
   }
 }

@@ -1,4 +1,5 @@
 import type {
+  AdminDashboardStats,
   CommunityEvent,
   PickupBooking,
   PlatformUser,
@@ -7,14 +8,27 @@ import type {
   TicketStatus,
 } from '@econav/platform';
 
+export type TicketListFilter = {
+  domain?: TicketDomain;
+  reporterId?: string;
+  limit?: number;
+  cursor?: string;
+};
+
+export type TicketListResult = {
+  tickets: ServiceTicket[];
+  nextCursor: string | null;
+};
+
 export interface PlatformStore {
   findUserByPhone(phone: string): Promise<PlatformUser | undefined>;
   createSession(userId: string): Promise<string>;
   getUserByToken(token: string | undefined): Promise<PlatformUser | undefined>;
-  listTickets(filter?: {
-    domain?: TicketDomain;
-    reporterId?: string;
-  }): Promise<ServiceTicket[]>;
+  revokeSession(token: string): Promise<void>;
+  revokeAllSessionsForUser(userId: string): Promise<void>;
+  updateUserPreferredLanguage(userId: string, language: PlatformUser['preferredLanguage']): Promise<PlatformUser | undefined>;
+  listTickets(filter?: TicketListFilter): Promise<TicketListResult>;
+  getDashboardStats(): Promise<AdminDashboardStats>;
   createTicket(input: {
     domain: TicketDomain;
     category: string;

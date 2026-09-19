@@ -93,7 +93,8 @@ export function PlatformShell({
         >
           {variant === 'citizen' && citizen && (
             <>
-              {citizen.primary.map((item) => renderNavLink(item.href, labelForNav(t, item.labelKey)))}
+              {citizen.primary.map((item) => renderNavLink(item.href, labelForNav(t, item.moduleId)))}
+              {renderNavLink('/citizen', t.nav.home)}
               <div className="nav-more">
                 <button
                   type="button"
@@ -105,29 +106,21 @@ export function PlatformShell({
                 </button>
                 {moreOpen && (
                   <div className="nav-more-panel" role="group" aria-label={t.nav.allModules}>
-                    {citizen.more.map((item) => renderNavLink(item.href, labelForNav(t, item.labelKey)))}
-                    <Link href="/citizen/community" className="nav-link" onClick={() => setMenuOpen(false)}>
-                      Community
-                    </Link>
-                    <Link href="/citizen/utilities" className="nav-link" onClick={() => setMenuOpen(false)}>
-                      Utilities
-                    </Link>
-                    <Link href="/citizen/education" className="nav-link" onClick={() => setMenuOpen(false)}>
-                      Education
-                    </Link>
+                    {citizen.more.map((item) => renderNavLink(item.href, labelForNav(t, item.moduleId)))}
+                    {renderNavLink('/citizen/help', t.nav.help)}
                   </div>
                 )}
               </div>
             </>
           )}
-          {variant === 'admin' && adminItems.map((item) => renderNavLink(item.href, labelForNav(t, item.labelKey)))}
+          {variant === 'admin' && adminItems.map((item) => renderNavLink(item.href, labelForNav(t, item.moduleId)))}
         </nav>
       </header>
 
       {variant === 'citizen' && (
         <aside className="platform-sidebar" aria-label={t.nav.citizenServices}>
           {[...(citizen?.primary ?? []), ...(citizen?.more ?? [])].map((item) =>
-            renderNavLink(item.href, labelForNav(t, item.labelKey)),
+            renderNavLink(item.href, labelForNav(t, item.moduleId)),
           )}
         </aside>
       )}

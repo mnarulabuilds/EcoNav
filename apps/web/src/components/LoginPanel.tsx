@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { login } from '@/lib/platform-api';
+import { loginWithCookie } from '@/lib/auth-api';
 import type { PlatformUser } from '@econav/platform';
 import { useToast } from '@/components/ui/Toast';
 import { useI18n } from '@/i18n';
@@ -20,7 +20,7 @@ const DEMO_ACCOUNTS = [
 
 export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
   const { push } = useToast();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const [phone, setPhone] = useState('9999999999');
   const [otp, setOtp] = useState('123456');
   const [error, setError] = useState<string | null>(null);
@@ -31,8 +31,10 @@ export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
     setLoading(true);
     setError(null);
     try {
-      const { token, user } = await login(phone, otp);
-      localStorage.setItem('cityconnect_token', token);
+      const { user } = await loginWithCookie(phone, otp, locale);
+      if (user.preferredLanguage && user.preferredLanguage !== locale) {
+        setLocale(user.preferredLanguage);
+      }
       push(`Welcome, ${user.name}`, 'success');
       onLoggedIn(user);
     } catch (err) {
