@@ -19,3 +19,16 @@ jobs:
       - run: npm run build --workspace=@econav/core
       - run: npm run build --workspace=@econav/web
       - run: npm test
+
+  docker-build:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API image
+        run: docker build -f Dockerfile -t cityconnect-api:ci .
+      - name: Build web image
+        run: |
+          docker build -f Dockerfile.web \
+            --build-arg NEXT_PUBLIC_API_URL=https://api.cityconnect.in \
+            -t cityconnect-web:ci .

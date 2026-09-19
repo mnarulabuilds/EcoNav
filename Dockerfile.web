@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-ARG NEXT_PUBLIC_API_URL=https://api.econav.in
+ARG NEXT_PUBLIC_API_URL=https://api.cityconnect.in
 ARG NEXT_PUBLIC_MAP_TILE_URL=https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
@@ -11,14 +11,21 @@ ENV NEXT_PUBLIC_MAP_TILE_URL=$NEXT_PUBLIC_MAP_TILE_URL
 COPY package.json package-lock.json tsconfig.base.json ./
 COPY packages/core/package.json packages/core/
 COPY apps/web/package.json apps/web/
+COPY apps/api/package.json apps/api/
+COPY apps/mobile/package.json apps/mobile/
+COPY packages/platform/package.json packages/platform/
+COPY packages/schemes-engine/package.json packages/schemes-engine/
+COPY packages/db/package.json packages/db/
 
 RUN npm ci
 
 COPY packages/core packages/core
+COPY packages/platform packages/platform
 COPY apps/web apps/web
 
-RUN npm run build --workspace=@econav/core
-RUN npm run build --workspace=@econav/web
+RUN npm run build --workspace=@econav/core \
+ && npm run build --workspace=@econav/platform \
+ && npm run build --workspace=@econav/web
 
 FROM node:20-alpine AS runner
 
@@ -26,11 +33,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
 
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||3000)+'/',(r)=>{process.exit(r.statusCode&&r.statusCode<500?0:1)}).on('error',()=>process.exit(1))"
 
 CMD ["node", "apps/web/server.js"]

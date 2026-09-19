@@ -3,6 +3,8 @@ import type { FastifyCorsOptions } from '@fastify/cors';
 const DEFAULT_ORIGINS = ['http://localhost:3000', 'http://localhost:8081'];
 
 const PRODUCTION_ORIGINS = [
+  'https://www.cityconnect.in',
+  'https://cityconnect.in',
   'https://www.econav.in',
   'https://econav.in',
   'https://econav-web.vercel.app',
@@ -41,6 +43,6 @@ export function buildCorsOptions(): FastifyCorsOptions {
       callback(null, isAllowedOrigin(origin, allowed));
     },
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Accept'],
+    allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   };
 }

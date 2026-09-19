@@ -13,8 +13,8 @@
     "dev": "bash scripts/dev-local.sh",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "db:migrate": "npm run migrate --workspace=@econav/db",
-    "db:seed": "npm run seed --workspace=@econav/db",
+    "db:migrate": "bash scripts/with-env.sh npm run migrate --workspace=@econav/db",
+    "db:seed": "bash scripts/with-env.sh npm run seed --workspace=@econav/db",
     "db:prepare": "npm run build --workspace=@econav/db && npm run db:seed",
     "dev:worker": "npm run worker:notifications --workspace=@econav/api",
     "dev:api": "npm run dev --workspace=@econav/api",
@@ -23,8 +23,9 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
-    "setup:deploy": "bash scripts/setup-deploy.sh",
-    "deploy": "bash scripts/deploy.sh",
+    "setup:deploy": "bash scripts/setup-docker-prod.sh",
+    "deploy": "bash scripts/deploy-docker.sh",
+    "deploy:vercel": "bash scripts/legacy/deploy-vercel.sh",
     "go-live": "bash scripts/go-live.sh"
   },
   "engines": {

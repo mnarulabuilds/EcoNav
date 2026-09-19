@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   output: 'standalone',
-  transpilePackages: ['@econav/core'],
+  transpilePackages: ['@econav/core', '@econav/platform'],
 };
 
 module.exports = nextConfig;

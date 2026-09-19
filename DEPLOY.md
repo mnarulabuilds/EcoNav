@@ -1,93 +1,147 @@
-# Deploy EcoNav to www.econav.in
+# Deploy CityConnect to https://www.cityconnect.in (Docker)
 
-One-command deployment using **Vercel** (web) + **Railway** (API).
+Production stack runs entirely in **Docker**:
 
-| Service | URL | Host |
-|---------|-----|------|
-| Web | https://www.econav.in | Vercel |
-| API | https://api.econav.in | Railway |
+| Service | Container | Public URL |
+|---------|-----------|------------|
+| Web (Next.js) | `web` | https://www.cityconnect.in |
+| API (Fastify) | `api` | https://api.cityconnect.in |
+| PostgreSQL | `postgres` | internal only |
+| Notification worker | `worker` | internal |
+| TLS reverse proxy | `caddy` | ports 80 / 443 |
+
+CORS is enforced by the API using `CORS_ORIGINS` (set automatically in `.env.production`).
 
 ---
 
-## One-time setup (~10 minutes)
+## Prerequisites
 
-### 1. Get deploy tokens
+- A Linux VPS (2 GB+ RAM recommended) with **Docker** and **Docker Compose v2**
+- DNS control for **cityconnect.in**
+- Ports **80** and **443** open on the server firewall
 
-| Platform | Token URL |
-|----------|-----------|
-| Vercel | https://vercel.com/account/tokens |
-| Railway | https://railway.com/account/tokens |
+---
 
-### 2. Create a Railway project (if you don't have one)
+## One-time setup (~15 minutes)
 
-1. Go to https://railway.com/dashboard → **New Project** → **Empty Project**
-2. Name it `econav-api`
-3. Copy **Project ID** from Settings → General
-4. Create a **Project Token** from Settings → Tokens
+### 1. Configure production env
 
-### 3. Configure credentials
-
-```bash
-cp .env.deploy.example .env.deploy
-```
-
-Edit `.env.deploy`:
-
-```env
-VERCEL_TOKEN=...           # from vercel.com/account/tokens
-RAILWAY_PROJECT_ID=...     # from Railway → Project → Settings → General
-RAILWAY_TOKEN=...          # from Railway → Project → Settings → Tokens
-```
-
-> **Important:** `RAILWAY_TOKEN` must be a **Project Token**, not an account token from railway.com/account/tokens.
-
-### 4. Run setup (first deploy)
+On your **local machine** (or on the server):
 
 ```bash
 npm run setup:deploy
+# creates .env.production with a random Postgres password
 ```
 
-### 5. Configure DNS (at your domain registrar)
+Edit `.env.production`:
 
-| Record | Type | Value |
-|--------|------|-------|
-| `www.econav.in` | CNAME | `cname.vercel-dns.com` |
-| `econav.in` | A | `76.76.21.21` |
-| `api.econav.in` | CNAME | *(Railway hostname from dashboard)* |
+- `ACME_EMAIL` — email for Let's Encrypt (Caddy)
+- Confirm domains: `www.cityconnect.in`, `cityconnect.in`, `api.cityconnect.in`
+- Confirm `CORS_ORIGINS=https://www.cityconnect.in,https://cityconnect.in`
+- Confirm `NEXT_PUBLIC_API_URL=https://api.cityconnect.in`
 
-Also add domains in hosting dashboards:
-- **Vercel** → econav-web → Settings → Domains → add `www.econav.in` and `econav.in`
-- **Railway** → econav-api → Settings → Networking → add `api.econav.in`
+### 2. DNS records
 
----
+Point all hostnames to your **server public IPv4** (A records):
 
-## Deploy (every time)
+| Host | Type | Value |
+|------|------|--------|
+| `www` | A | `YOUR_SERVER_IP` |
+| `@` (apex) | A | `YOUR_SERVER_IP` |
+| `api` | A | `YOUR_SERVER_IP` |
+
+Wait for propagation (often 5–30 minutes).
+
+### 3. Deploy
+
+**Option A — deploy on the server (recommended)**
+
+Copy the repo to the server, then:
+
+```bash
+cd /opt/cityconnect   # or your path
+cp .env.production.example .env.production   # if not copied yet
+# paste/edit secrets
+npm run deploy
+```
+
+**Option B — deploy from your laptop via SSH**
+
+In `.env.production`:
+
+```env
+DEPLOY_SSH=ubuntu@YOUR_SERVER_IP
+DEPLOY_PATH=/opt/cityconnect
+```
+
+Then from the repo root:
 
 ```bash
 npm run deploy
 ```
 
-This will:
-1. Run all unit tests
-2. Deploy API to Railway (`api.econav.in`)
-3. Deploy Web to Vercel (`www.econav.in`)
-4. Verify API health
+This rsyncs the project and runs `docker compose up -d --build` on the server.
 
 ---
 
-## Troubleshooting
+## What `npm run deploy` does
 
-| Problem | Fix |
+1. Runs unit tests
+2. Builds Docker images (`Dockerfile`, `Dockerfile.web`)
+3. Starts Postgres, API, worker, web, and Caddy
+4. API entrypoint runs DB migrations + demo seed (if DB is empty)
+5. Caddy obtains TLS certificates and routes:
+   - `api.cityconnect.in` → API
+   - `www.cityconnect.in` → web
+   - `cityconnect.in` → redirect to www
+
+---
+
+## Verify
+
+```bash
+curl https://api.cityconnect.in/api/health
+curl -I https://www.cityconnect.in
+```
+
+In the browser (DevTools → Network), confirm API calls from `www.cityconnect.in` succeed with **no CORS errors**.
+
+Demo login: OTP `123456` — citizen `9999999999`, official `8888888888`.
+
+---
+
+## CORS troubleshooting
+
+| Symptom | Fix |
 |---------|-----|
-| `Missing .env.deploy` | Run `npm run setup:deploy` |
-| CORS error on website | Redeploy — script updates `CORS_ORIGINS` automatically |
-| API not reachable | Check Railway logs; confirm DNS for `api.econav.in` |
-| Web shows old API URL | Redeploy with `npm run deploy` |
-| Tests fail | Fix failing tests before deploy (deploy aborts on test failure) |
-| `railway/iac requires Railway CLI 5.42.1` | Fixed — scripts use `@railway/cli`, not the `railway` SDK package |
-| `Unauthorized` on setup/deploy | Use a **Project Token** as `RAILWAY_TOKEN` (Project → Settings → Tokens) plus `RAILWAY_PROJECT_ID`. Account tokens from railway.com/account/tokens will NOT work as `RAILWAY_TOKEN` |
-| `Not signed in` on deploy | Same as above — project token + project ID required |
-| `railway variables` fails | Fixed — CLI v5 uses `railway variable set` |
+| Browser blocked by CORS | Set `CORS_ORIGINS=https://www.cityconnect.in,https://cityconnect.in` in `.env.production`, then `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build api` |
+| Admin routes fail after login | Ensure `Authorization` is sent; API allows this header in preflight |
+| Wrong API from web | Rebuild web after changing `NEXT_PUBLIC_API_URL`: `docker compose ... up -d --build web` |
+
+Origins are also baked into `apps/api/src/cors.ts` for `cityconnect.in`; `CORS_ORIGINS` env wins for additional domains.
+
+---
+
+## Operations
+
+```bash
+# Logs
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f api web caddy
+
+# Restart after env change
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+
+# Stop
+docker compose --env-file .env.production -f docker-compose.prod.yml down
+```
+
+Backups: snapshot the `cityconnect_pg_data` Docker volume regularly.
+
+---
+
+## Legacy (Vercel + Railway)
+
+Non-container web hosting is still available via `npm run deploy:vercel` — see [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md).
 
 ---
 
@@ -95,10 +149,11 @@ This will:
 
 | File | Purpose |
 |------|---------|
-| `deploy.config.json` | Domain and URL configuration |
-| `.env.deploy` | Vercel + Railway tokens (gitignored) |
-| `scripts/setup-deploy.sh` | One-time project linking |
-| `scripts/deploy.sh` | Production deploy script |
-| `Dockerfile` | API container for Railway |
-| `railway.toml` | Railway build config |
-| `apps/web/vercel.json` | Vercel monorepo build config |
+| `docker-compose.prod.yml` | Production orchestration |
+| `Dockerfile` | API + worker image |
+| `Dockerfile.web` | Next.js standalone web image |
+| `deploy/Caddyfile` | TLS + reverse proxy |
+| `.env.production.example` | Production env template |
+| `deploy.config.json` | Canonical domains & URLs |
+| `scripts/deploy-docker.sh` | Deploy script |
+| `scripts/setup-docker-prod.sh` | First-time env setup |

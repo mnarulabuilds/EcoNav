@@ -3,7 +3,7 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile",
-    "watchPatterns": ["apps/api/**", "packages/core/**", "Dockerfile"]
+    "watchPatterns": ["apps/api/**", "packages/**", "Dockerfile", "scripts/docker/**"]
   },
   "deploy": {
     "healthcheckPath": "/api/health",

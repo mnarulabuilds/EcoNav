@@ -1,17 +1,19 @@
 {
+  "product": "CityConnect",
   "domains": {
-    "web": "www.econav.in",
-    "webAlias": "econav.in",
-    "api": "api.econav.in"
+    "web": "www.cityconnect.in",
+    "webAlias": "cityconnect.in",
+    "api": "api.cityconnect.in"
   },
   "urls": {
-    "web": "https://www.econav.in",
-    "api": "https://api.econav.in"
+    "web": "https://www.cityconnect.in",
+    "api": "https://api.cityconnect.in"
   },
-  "railway": {
-    "service": "econav-api"
+  "cors": {
+    "extraOrigins": []
   },
-  "vercel": {
-    "project": "econav-web"
+  "docker": {
+    "composeFile": "docker-compose.prod.yml",
+    "envFile": ".env.production"
   }
 }

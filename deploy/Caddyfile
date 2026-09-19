@@ -1,0 +1,17 @@
+{
+	email {$ACME_EMAIL}
+}
+
+{$PUBLIC_API_DOMAIN} {
+	encode gzip
+	reverse_proxy api:3001
+}
+
+{$PUBLIC_WEB_DOMAIN} {
+	encode gzip
+	reverse_proxy web:3000
+}
+
+{$PUBLIC_WEB_ALIAS} {
+	redir https://{$PUBLIC_WEB_DOMAIN}{uri} permanent
+}

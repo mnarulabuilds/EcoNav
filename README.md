@@ -234,25 +234,16 @@ Copy `.env.example` to `.env`:
 
 ## Deploy to Production
 
-### Go live (start here)
-
-**→ [GO-LIVE.md](GO-LIVE.md)** — Railway (API) + Vercel (Web) → `www.econav.in`
-
-Or run the guided wizard:
+**→ [GO-LIVE.md](GO-LIVE.md)** — Docker stack (Postgres + API + web + Caddy TLS) → **https://www.cityconnect.in**
 
 ```bash
-npm run go-live
+npm run setup:deploy   # one-time: .env.production
+npm run deploy           # tests + docker compose build/up
 ```
 
-### CLI deploy (alternative)
+See [DEPLOY.md](DEPLOY.md) for DNS, CORS, SSH deploy, and operations.
 
-```bash
-cp .env.deploy.example .env.deploy
-npm run setup:deploy   # one-time
-npm run deploy         # every release
-```
-
-See [DEPLOY.md](DEPLOY.md) for CLI-based deployment.
+Legacy Vercel + Railway: [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md) / `npm run deploy:vercel`.
 
 ## License
 
