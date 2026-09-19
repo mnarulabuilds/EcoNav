@@ -24,14 +24,16 @@ export default function CitizenHomePage() {
       subtitle="Services for residents"
       user={user}
       variant="citizen"
+      onLogout={logout}
     >
       {!loading && !user && <LoginPanel onLoggedIn={setUser} />}
       {user && (
-        <p className="muted">
-          Welcome back. Use modules below or sign out{' '}
-          <button type="button" className="btn btn-secondary" onClick={logout}>
-            Sign out
-          </button>
+        <p className="welcome-banner">
+          Welcome back, <strong>{user.name}</strong>. Pick a service below or{' '}
+          <Link href="/citizen/track" className="inline-link">
+            track your requests
+          </Link>
+          .
         </p>
       )}
 

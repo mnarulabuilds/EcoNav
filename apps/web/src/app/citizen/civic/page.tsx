@@ -7,11 +7,15 @@ import { LoginPanel } from '@/components/LoginPanel';
 import { useSession } from '@/components/useSession';
 import { createCivicTicket, fetchCivicTickets, fetchModules } from '@/lib/platform-api';
 import type { ServiceTicket, Ward } from '@econav/platform';
-
+import { useToast } from '@/components/ui/Toast';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { PageLoader } from '@/components/ui/PageLoader';
+import { EmptyState } from '@/components/ui/EmptyState';
 const IssueLocationMap = dynamic(() => import('@/components/IssueLocationMap'), { ssr: false });
 
 export default function CivicPage() {
-  const { user, loading, setUser } = useSession();
+  const { user, loading, setUser, logout } = useSession();
+  const { push } = useToast();
   const [wards, setWards] = useState<Ward[]>([]);
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
   const [category, setCategory] = useState('pothole');
@@ -42,7 +46,9 @@ export default function CivicPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!pin) {
-      setMessage('Tap the map to mark the issue location.');
+      const msg = 'Tap the map to mark the issue location.';
+      setMessage(msg);
+      push(msg, 'error');
       return;
     }
     setMessage(null);
@@ -55,19 +61,23 @@ export default function CivicPage() {
         lat: pin.lat,
         lng: pin.lng,
       });
-      setMessage('Report submitted. Track status below.');
+      push('Report submitted successfully', 'success');
+      setMessage('Report submitted. Track status below or on Track.');
       setTitle('');
       setDescription('');
       setPin(null);
       const d = await fetchCivicTickets();
       setTickets(d.tickets);
     } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'Failed');
+      const msg = err instanceof Error ? err.message : 'Failed';
+      setMessage(msg);
+      push(msg, 'error');
     }
   }
 
   return (
-    <PlatformShell title="Civic & Grievances" variant="citizen" user={user}>
+    <PlatformShell title="Civic & Grievances" variant="citizen" user={user} onLogout={logout}>
+      {loading && <PageLoader />}
       {!loading && !user && <LoginPanel onLoggedIn={setUser} />}
       {user && (
         <div className="two-col">
@@ -110,25 +120,28 @@ export default function CivicPage() {
             <button type="submit" className="btn btn-primary">
               Submit report
             </button>
-            {message && <p className="muted">{message}</p>}
+            {message && <p className="form-hint">{message}</p>}
           </form>
           <div className="panel">
             <h2>Your reports</h2>
-            <ul className="data-list">
-              {tickets.map((t) => (
-                <li key={t.id}>
-                  <strong>{t.title}</strong>
-                  <div className="muted">{t.category}</div>
-                  {t.location && (
-                    <div className="muted">
-                      📍 {t.location.lat.toFixed(4)}, {t.location.lng.toFixed(4)}
-                    </div>
-                  )}
-                  <span className="status-pill">{t.status}</span>
-                </li>
-              ))}
-              {tickets.length === 0 && <p className="muted">No reports yet.</p>}
-            </ul>
+            {tickets.length === 0 ? (
+              <EmptyState title="No reports yet" description="Your submitted issues appear here." />
+            ) : (
+              <ul className="data-list">
+                {tickets.map((t) => (
+                  <li key={t.id}>
+                    <strong>{t.title}</strong>
+                    <div className="muted">{t.category}</div>
+                    {t.location && (
+                      <div className="muted">
+                        📍 {t.location.lat.toFixed(4)}, {t.location.lng.toFixed(4)}
+                      </div>
+                    )}
+                    <StatusBadge status={t.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       )}

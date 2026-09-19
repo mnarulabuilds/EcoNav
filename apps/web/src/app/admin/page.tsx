@@ -8,7 +8,7 @@ import { fetchAdminDashboard } from '@/lib/platform-api';
 import type { AdminDashboardStats } from '@econav/platform';
 
 export default function AdminDashboardPage() {
-  const { user, loading, setUser } = useSession();
+  const { user, loading, setUser, logout } = useSession();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +20,13 @@ export default function AdminDashboardPage() {
   }, [user]);
 
   return (
-    <PlatformShell title="Official Console" subtitle="City operations dashboard" variant="admin" user={user}>
+    <PlatformShell
+      title="Official Console"
+      subtitle="City operations dashboard"
+      variant="admin"
+      user={user}
+      onLogout={logout}
+    >
       {!loading && !user && <LoginPanel onLoggedIn={setUser} />}
       {user && user.role === 'citizen' && (
         <div className="alert alert-error">Sign in with official demo phone 8888888888.</div>

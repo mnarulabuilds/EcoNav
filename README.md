@@ -246,6 +246,8 @@ See [DEPLOY.md](DEPLOY.md) for DNS, CORS, SSH deploy, and operations.
 
 Legacy Vercel + Railway: [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md) / `npm run deploy:vercel`.
 
+Product ideas and UX direction: [ROADMAP.md](ROADMAP.md).
+
 ## License
 
 MIT License — see [LICENSE](LICENSE).
