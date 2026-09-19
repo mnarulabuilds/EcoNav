@@ -59,6 +59,25 @@ describe('CORS', () => {
     expect(response.headers['access-control-allow-origin']).toBe('https://www.cityconnect.in');
   });
 
+  it('allows custom CORS_ORIGINS from env', async () => {
+    process.env.CORS_ORIGINS = 'https://custom.example.com';
+    const fresh = await buildServer();
+    await fresh.ready();
+
+    const response = await fresh.inject({
+      method: 'OPTIONS',
+      url: '/api/plan',
+      headers: {
+        origin: 'https://custom.example.com',
+        'access-control-request-method': 'POST',
+      },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBe('https://custom.example.com');
+    delete process.env.CORS_ORIGINS;
+    await fresh.close();
+  });
+
   it('allows Authorization header on preflight', async () => {
     const response = await server.inject({
       method: 'OPTIONS',

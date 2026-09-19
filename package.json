@@ -20,7 +20,8 @@
     "dev:api": "npm run dev --workspace=@econav/api",
     "dev:web": "npm run dev --workspace=@econav/web",
     "dev:mobile": "npm run start --workspace=@econav/mobile",
-    "test": "npm run test --workspaces --if-present",
+    "test": "vitest run --config vitest.config.ts",
+    "test:coverage": "vitest run --config vitest.config.ts --coverage",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "setup:deploy": "bash scripts/setup-docker-prod.sh",
@@ -33,6 +34,8 @@
   },
   "devDependencies": {
     "@railway/cli": "^5.52.1",
-    "vercel": "^41.0.0"
+    "@vitest/coverage-v8": "^2.1.9",
+    "vercel": "^41.0.0",
+    "vitest": "^2.1.9"
   }
 }

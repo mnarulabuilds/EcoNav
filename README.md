@@ -103,7 +103,8 @@ npm run dev:mobile
 ### Run Tests
 
 ```bash
-npm test
+npm test              # unit tests
+npm run test:coverage # enforces ≥75% coverage (v8)
 ```
 
 ## API Reference
