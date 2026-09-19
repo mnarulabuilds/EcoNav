@@ -10,6 +10,7 @@ export default defineConfig({
       'packages/platform/src/**/*.test.ts',
       'packages/db/src/**/*.test.ts',
       'apps/api/src/**/*.test.ts',
+      'apps/web/src/lib/**/*.test.ts',
     ],
     coverage: {
       provider: 'v8',
@@ -21,6 +22,7 @@ export default defineConfig({
         'packages/platform/src/**/*.ts',
         'packages/db/src/**/*.ts',
         'apps/api/src/**/*.ts',
+        'apps/web/src/lib/api-client.ts',
       ],
       exclude: [
         '**/*.test.ts',

@@ -8,6 +8,7 @@
     "dev": "tsx watch src/server.ts",
     "worker:notifications": "tsx src/worker/notifications.ts",
     "start": "node dist/server.js",
+    "lint": "eslint src",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -21,7 +22,10 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@eslint/js": "^9.15.0",
     "@types/node": "^22.9.0",
+    "eslint": "^9.15.0",
+    "typescript-eslint": "^8.15.0",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"

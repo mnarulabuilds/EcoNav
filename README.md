@@ -105,7 +105,14 @@ npm run dev:mobile
 ```bash
 npm test              # unit tests
 npm run test:coverage # enforces ≥75% coverage (v8)
+npm run check         # typecheck + lint + coverage (CI-equivalent)
 ```
+
+### Code quality & accessibility
+
+- **ESLint:** `next/core-web-vitals` on the web app (includes JSX a11y rules); TypeScript ESLint on the API.
+- **A11y:** skip links, focus rings, `aria-current` navigation, screen-reader map instructions, reduced-motion / high-contrast CSS.
+- Run `npm run lint` before opening a PR.
 
 ## API Reference
 

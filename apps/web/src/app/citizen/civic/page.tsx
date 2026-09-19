@@ -3,13 +3,12 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useState } from 'react';
 import { PlatformShell } from '@/components/PlatformShell';
-import { LoginPanel } from '@/components/LoginPanel';
+import { GuestGate } from '@/components/auth/GuestGate';
 import { useSession } from '@/components/useSession';
 import { createCivicTicket, fetchCivicTickets, fetchModules } from '@/lib/platform-api';
 import type { ServiceTicket, Ward } from '@econav/platform';
 import { useToast } from '@/components/ui/Toast';
 import { StatusBadge } from '@/components/ui/StatusBadge';
-import { PageLoader } from '@/components/ui/PageLoader';
 import { EmptyState } from '@/components/ui/EmptyState';
 const IssueLocationMap = dynamic(() => import('@/components/IssueLocationMap'), { ssr: false });
 
@@ -77,9 +76,7 @@ export default function CivicPage() {
 
   return (
     <PlatformShell title="Civic & Grievances" variant="citizen" user={user} onLogout={logout}>
-      {loading && <PageLoader />}
-      {!loading && !user && <LoginPanel onLoggedIn={setUser} />}
-      {user && (
+      <GuestGate loading={loading} user={user} onLoggedIn={setUser} loaderLabel="Checking session…">
         <div className="two-col">
           <form className="panel form-stack" onSubmit={submit}>
             <h2>Report an issue</h2>
@@ -144,7 +141,7 @@ export default function CivicPage() {
             )}
           </div>
         </div>
-      )}
+      </GuestGate>
     </PlatformShell>
   );
 }

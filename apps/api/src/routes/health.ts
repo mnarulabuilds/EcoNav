@@ -3,7 +3,7 @@ import { getPlatformStore } from '../store/index.js';
 
 export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.get('/api/health', async () => {
-    let database: 'memory' | 'postgres' | 'unknown' = process.env.DATABASE_URL ? 'postgres' : 'memory';
+    const database: 'memory' | 'postgres' | 'unknown' = process.env.DATABASE_URL ? 'postgres' : 'memory';
     let dbOk = true;
     try {
       dbOk = await getPlatformStore().ping();

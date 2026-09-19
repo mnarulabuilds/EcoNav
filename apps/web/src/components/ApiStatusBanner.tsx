@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { getApiBaseUrl } from '@/lib/api-client';
 
 export function ApiStatusBanner() {
   const [offline, setOffline] = useState(false);
@@ -12,7 +12,7 @@ export function ApiStatusBanner() {
 
     async function check() {
       try {
-        const res = await fetch(`${API_URL}/api/health`, { cache: 'no-store' });
+        const res = await fetch(`${getApiBaseUrl()}/api/health`, { cache: 'no-store' });
         if (!cancelled) setOffline(!res.ok);
       } catch {
         if (!cancelled) setOffline(true);
@@ -31,7 +31,7 @@ export function ApiStatusBanner() {
 
   return (
     <div className="api-banner" role="alert">
-      Cannot reach the CityConnect API at <code>{API_URL}</code>. Start it with{' '}
+      Cannot reach the CityConnect API at <code>{getApiBaseUrl()}</code>. Start it with{' '}
       <code>npm run dev:api</code> or check <code>NEXT_PUBLIC_API_URL</code>.
     </div>
   );

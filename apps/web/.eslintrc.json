@@ -1,0 +1,7 @@
+{
+  "extends": ["next/core-web-vitals"],
+  "rules": {
+    "jsx-a11y/no-autofocus": "off",
+    "react/no-unescaped-entities": "off"
+  }
+}

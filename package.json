@@ -24,6 +24,7 @@
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
+    "check": "npm run typecheck && npm run lint && npm run test:coverage",
     "setup:deploy": "bash scripts/setup-docker-prod.sh",
     "deploy": "bash scripts/deploy-docker.sh",
     "deploy:vercel": "bash scripts/legacy/deploy-vercel.sh",

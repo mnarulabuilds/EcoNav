@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { PlatformUser } from '@econav/platform';
 import { SiteFooter } from '@/components/SiteFooter';
 
@@ -30,6 +30,9 @@ export function PlatformShell({
 }: PlatformShellProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const pageTitleId = useId();
+  const navLabel =
+    variant === 'admin' ? 'Official console' : variant === 'citizen' ? 'Citizen services' : 'Site';
 
   const nav =
     variant === 'citizen'
@@ -53,13 +56,13 @@ export function PlatformShell({
 
   return (
     <div className="platform-root">
-      <header className="app-header">
+      <header className="app-header" role="banner">
         <div className="app-header-brand">
-          <Link href="/" className="app-header-logo">
+          <Link href="/" className="app-header-logo" aria-label="CityConnect home">
             CityConnect
           </Link>
           <div>
-            <h1>{title}</h1>
+            <h1 id={pageTitleId}>{title}</h1>
             {subtitle && <p>{subtitle}</p>}
           </div>
         </div>
@@ -68,25 +71,34 @@ export function PlatformShell({
           className="nav-toggle"
           aria-expanded={menuOpen}
           aria-controls="platform-nav"
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
           onClick={() => setMenuOpen((o) => !o)}
         >
           Menu
         </button>
-        <nav id="platform-nav" className={menuOpen ? 'platform-nav open' : 'platform-nav'}>
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={isActive(pathname, item.href) ? 'nav-link active' : 'nav-link'}
-              onClick={() => setMenuOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+        <nav
+          id="platform-nav"
+          className={menuOpen ? 'platform-nav open' : 'platform-nav'}
+          aria-label={navLabel}
+        >
+          {nav.map((item) => {
+            const active = isActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={active ? 'nav-link active' : 'nav-link'}
+                aria-current={active ? 'page' : undefined}
+                onClick={() => setMenuOpen(false)}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
       </header>
       {user && (
-        <div className="platform-user-bar">
+        <div className="platform-user-bar" role="status">
           <span>
             Signed in as <strong>{user.name}</strong> · {user.role.replace(/_/g, ' ')}
           </span>
@@ -97,7 +109,7 @@ export function PlatformShell({
           )}
         </div>
       )}
-      <main id="main-content" className="platform-main">
+      <main id="main-content" className="platform-main" aria-labelledby={pageTitleId}>
         {children}
       </main>
       <SiteFooter />

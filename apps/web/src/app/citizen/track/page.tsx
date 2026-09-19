@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PlatformShell } from '@/components/PlatformShell';
-import { LoginPanel } from '@/components/LoginPanel';
+import { GuestGate } from '@/components/auth/GuestGate';
 import { useSession } from '@/components/useSession';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageLoader } from '@/components/ui/PageLoader';
@@ -33,10 +33,9 @@ export default function TrackRequestsPage() {
       user={user}
       onLogout={logout}
     >
-      {loading && <PageLoader label="Checking session…" />}
-      {!loading && !user && <LoginPanel onLoggedIn={setUser} />}
-      {!loading && user && fetching && <PageLoader label="Loading your reports…" />}
-      {!loading && user && !fetching && tickets.length === 0 && (
+      <GuestGate loading={loading} user={user} onLoggedIn={setUser} loaderLabel="Checking session…">
+      {fetching && <PageLoader label="Loading your reports…" />}
+      {!fetching && tickets.length === 0 && (
         <EmptyState
           title="No reports yet"
           description="Submit a civic issue to track resolution here."
@@ -47,8 +46,8 @@ export default function TrackRequestsPage() {
           }
         />
       )}
-      {!loading && user && !fetching && tickets.length > 0 && (
-        <ul className="data-list track-list">
+      {!fetching && tickets.length > 0 && (
+        <ul className="data-list track-list" aria-label="Your civic reports">
           {tickets.map((t) => {
             const sla = slaLabel(t);
             return (
@@ -71,6 +70,7 @@ export default function TrackRequestsPage() {
           })}
         </ul>
       )}
+      </GuestGate>
     </PlatformShell>
   );
 }
