@@ -8,6 +8,7 @@ describe('buildCorsOptions', () => {
   });
 
   it('allows vercel preview origins by default', () => {
+    delete process.env.CORS_ALLOW_VERCEL;
     const { origin } = buildCorsOptions();
     const cb = viOriginCallback(origin!);
     cb('https://my-app.vercel.app', (err, allowed) => {

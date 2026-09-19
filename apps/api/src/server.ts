@@ -15,6 +15,7 @@ async function buildServer() {
 
   const fastify = Fastify({
     logger: process.env.NODE_ENV !== 'test',
+    trustProxy: process.env.TRUST_PROXY === 'true',
   });
 
   await fastify.register(cors, buildCorsOptions());
