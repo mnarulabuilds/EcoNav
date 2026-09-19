@@ -3,8 +3,7 @@ import type {
   RoutePlanResult,
   SimulationTimeline,
 } from '@econav/core';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+import { requestJson } from './api-client';
 
 export interface PlanResponse {
   plan: RoutePlanResult;
@@ -12,24 +11,16 @@ export interface PlanResponse {
 }
 
 export async function planRoutes(input: RoutePlanInput): Promise<PlanResponse> {
-  const response = await fetch(`${API_URL}/api/plan`, {
+  return requestJson<PlanResponse>('/api/plan', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(input),
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error ?? `HTTP ${response.status}`);
-  }
-
-  return response.json();
 }
 
 export async function checkHealth(): Promise<boolean> {
   try {
-    const response = await fetch(`${API_URL}/api/health`);
-    return response.ok;
+    await requestJson<{ status: string }>('/api/health');
+    return true;
   } catch {
     return false;
   }

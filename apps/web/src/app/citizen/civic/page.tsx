@@ -8,6 +8,8 @@ import { useSession } from '@/components/useSession';
 import { createCivicTicket, fetchCivicTickets, fetchModules } from '@/lib/platform-api';
 import type { ServiceTicket, Ward } from '@econav/platform';
 import { useToast } from '@/components/ui/Toast';
+import { useI18n } from '@/i18n';
+import { resolveUserMessage } from '@/lib/errors';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 const IssueLocationMap = dynamic(() => import('@/components/IssueLocationMap'), { ssr: false });
@@ -15,6 +17,7 @@ const IssueLocationMap = dynamic(() => import('@/components/IssueLocationMap'), 
 export default function CivicPage() {
   const { user, loading, setUser, logout } = useSession();
   const { push } = useToast();
+  const { t } = useI18n();
   const [wards, setWards] = useState<Ward[]>([]);
   const [tickets, setTickets] = useState<ServiceTicket[]>([]);
   const [category, setCategory] = useState('pothole');
@@ -68,7 +71,7 @@ export default function CivicPage() {
       const d = await fetchCivicTickets();
       setTickets(d.tickets);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed';
+      const msg = resolveUserMessage(err, t.errors);
       setMessage(msg);
       push(msg, 'error');
     }

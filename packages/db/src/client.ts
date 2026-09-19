@@ -7,7 +7,13 @@ import { PostgresPlatformStore } from './postgres-store.js';
 
 export async function createPostgresPlatformStore(connectionString: string) {
   await runMigrations(connectionString);
-  const pool = new pg.Pool({ connectionString });
+  const max = Number(process.env.PG_POOL_MAX ?? 20);
+  const pool = new pg.Pool({
+    connectionString,
+    max: Number.isFinite(max) && max > 0 ? max : 20,
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 10_000,
+  });
   const db = drizzle(pool, { schema });
   await seedIfEmpty(db);
   const store = new PostgresPlatformStore(db);

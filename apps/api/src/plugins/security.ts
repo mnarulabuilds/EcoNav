@@ -1,7 +1,15 @@
 import type { FastifyInstance } from 'fastify';
+import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 
 export async function registerSecurityPlugins(fastify: FastifyInstance): Promise<void> {
+  if (process.env.NODE_ENV !== 'test') {
+    await fastify.register(helmet, {
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    });
+  }
+
   if (process.env.NODE_ENV === 'test' || process.env.RATE_LIMIT_ENABLED === 'false') {
     return;
   }

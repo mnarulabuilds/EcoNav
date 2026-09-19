@@ -13,9 +13,12 @@ const HOST = process.env.API_HOST ?? '0.0.0.0';
 async function buildServer() {
   await initPlatformStore();
 
+  const bodyLimit = Number(process.env.API_BODY_LIMIT_BYTES ?? 1_048_576);
+
   const fastify = Fastify({
     logger: process.env.NODE_ENV !== 'test',
     trustProxy: process.env.TRUST_PROXY === 'true',
+    bodyLimit,
   });
 
   await fastify.register(cors, buildCorsOptions());

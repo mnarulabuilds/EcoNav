@@ -1,22 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { login } from '@/lib/platform-api';
 import type { PlatformUser } from '@econav/platform';
 import { useToast } from '@/components/ui/Toast';
+import { useI18n } from '@/i18n';
+import { resolveUserMessage } from '@/lib/errors';
 
 interface LoginPanelProps {
   onLoggedIn: (user: PlatformUser) => void;
 }
 
 const DEMO_ACCOUNTS = [
-  { label: 'Citizen', phone: '9999999999' },
-  { label: 'Official', phone: '8888888888' },
-  { label: 'Field', phone: '7777777777' },
-] as const;
+  { labelKey: 'citizen' as const, phone: '9999999999' },
+  { labelKey: 'official' as const, phone: '8888888888' },
+  { labelKey: 'field' as const, phone: '7777777777' },
+];
 
 export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
   const { push } = useToast();
+  const { t } = useI18n();
   const [phone, setPhone] = useState('9999999999');
   const [otp, setOtp] = useState('123456');
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +36,7 @@ export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
       push(`Welcome, ${user.name}`, 'success');
       onLoggedIn(user);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Login failed';
+      const msg = resolveUserMessage(err, t.errors);
       setError(msg);
       push(msg, 'error');
     } finally {
@@ -42,8 +46,11 @@ export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
 
   return (
     <div className="panel login-panel">
-      <h2>Sign in</h2>
-      <p className="muted">Demo OTP: <strong>123456</strong> · Need help? See <a href="/citizen/help">Help</a></p>
+      <h2>{t.login.title}</h2>
+      <p className="muted">
+        {t.login.demoHint}{' '}
+        <Link href="/citizen/help">Help</Link>
+      </p>
       <div className="demo-account-row">
         {DEMO_ACCOUNTS.map((acc) => (
           <button
@@ -55,30 +62,34 @@ export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
               setOtp('123456');
             }}
           >
-            {acc.label}
+            {t.login[acc.labelKey]}
           </button>
         ))}
       </div>
-      <form onSubmit={handleSubmit} className="form-stack">
+      <form onSubmit={handleSubmit} className="form-stack" noValidate>
         <label>
-          Mobile number
+          {t.login.mobile}
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             inputMode="tel"
             autoComplete="tel"
             required
+            minLength={10}
+            maxLength={15}
             aria-invalid={!!error}
           />
         </label>
         <label>
-          OTP
+          {t.login.otp}
           <input
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             inputMode="numeric"
             autoComplete="one-time-code"
             required
+            minLength={4}
+            maxLength={8}
           />
         </label>
         {error && (
@@ -87,7 +98,7 @@ export function LoginPanel({ onLoggedIn }: LoginPanelProps) {
           </p>
         )}
         <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? 'Signing in…' : 'Continue'}
+          {loading ? t.login.signingIn : t.login.continue}
         </button>
       </form>
     </div>
