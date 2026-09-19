@@ -4,6 +4,7 @@ import { buildCorsOptions } from './cors.js';
 import { healthRoutes } from './routes/health.js';
 import { planRoutes } from './routes/plan.js';
 import { platformRoutes } from './routes/platform.js';
+import { registerSecurityPlugins } from './plugins/security.js';
 import { initPlatformStore, shutdownPlatformStore } from './store/index.js';
 
 const PORT = Number(process.env.PORT ?? process.env.API_PORT ?? 3001);
@@ -17,6 +18,7 @@ async function buildServer() {
   });
 
   await fastify.register(cors, buildCorsOptions());
+  await registerSecurityPlugins(fastify);
 
   await fastify.register(healthRoutes);
   await fastify.register(planRoutes);

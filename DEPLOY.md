@@ -1,5 +1,9 @@
 # Deploy CityConnect to https://www.cityconnect.in (Docker)
 
+**Start here for commercial/production planning:** [PRODUCTION.md](PRODUCTION.md)
+
+**One-command live deploy:** `npm run deploy:live` (preflight + Docker + CORS smoke tests)
+
 Production stack runs entirely in **Docker**:
 
 | Service | Container | Public URL |

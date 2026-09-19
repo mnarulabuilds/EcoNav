@@ -1,7 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { matchSchemes } from '@econav/schemes-engine';
 import {
-  DEMO_OTP,
   PLATFORM_MODULES,
   SEED_DROP_POINTS,
   SEED_EDUCATION,
@@ -17,6 +16,7 @@ import {
   type TicketDomain,
 } from '@econav/platform';
 import { z } from 'zod';
+import { isDemoOtpLoginEnabled, verifyDemoOtp } from '../auth-config.js';
 import { getAuthUser, requireAuth } from '../middleware/auth.js';
 import { getPlatformStore } from '../store/index.js';
 
@@ -115,14 +115,30 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
     wards: SEED_WARDS,
   }));
 
-  fastify.post('/api/v1/auth/login', async (request, reply) => {
+  fastify.post(
+    '/api/v1/auth/login',
+    {
+      config: {
+        rateLimit: {
+          max: Number(process.env.RATE_LIMIT_LOGIN_MAX ?? 15),
+          timeWindow: Number(process.env.RATE_LIMIT_LOGIN_WINDOW_MS ?? 900_000),
+        },
+      },
+    },
+    async (request, reply) => {
     const parsed = loginSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: 'Invalid login', details: parsed.error.flatten() });
     }
 
+    if (!isDemoOtpLoginEnabled()) {
+      return reply.status(503).send({
+        error: 'Demo login is disabled. Configure SMS/OTP provider for production authentication.',
+      });
+    }
+
     const { phone, otp } = parsed.data;
-    if (otp !== DEMO_OTP) {
+    if (!verifyDemoOtp(otp)) {
       return reply.status(401).send({ error: 'Invalid OTP. Use demo OTP 123456.' });
     }
 
@@ -137,7 +153,8 @@ export async function platformRoutes(fastify: FastifyInstance): Promise<void> {
 
     const token = await store.createSession(user.id);
     return { token, user };
-  });
+    },
+  );
 
   fastify.get('/api/v1/auth/me', async (request, reply) => {
     const user = await getAuthUser(request);

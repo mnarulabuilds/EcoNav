@@ -242,14 +242,14 @@ Copy `.env.example` to `.env`:
 
 ## Deploy to Production
 
-**→ [GO-LIVE.md](GO-LIVE.md)** — Docker stack (Postgres + API + web + Caddy TLS) → **https://www.cityconnect.in**
+**→ [PRODUCTION.md](PRODUCTION.md)** — commercial roadmap, hardening, go-live at **https://www.cityconnect.in**
 
 ```bash
 npm run setup:deploy   # one-time: .env.production
-npm run deploy           # tests + docker compose build/up
+npm run deploy:live    # preflight + Docker + CORS verification
 ```
 
-See [DEPLOY.md](DEPLOY.md) for DNS, CORS, SSH deploy, and operations.
+See [DEPLOY.md](DEPLOY.md) for DNS, operations, and troubleshooting.
 
 Legacy Vercel + Railway: [DEPLOY-VERCEL.md](DEPLOY-VERCEL.md) / `npm run deploy:vercel`.
 
