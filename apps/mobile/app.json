@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "EcoNav",
-    "slug": "econav",
+    "name": "CityConnect",
+    "slug": "cityconnect",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "econav",
+    "scheme": "cityconnect",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
@@ -14,14 +14,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.econav.app"
+      "bundleIdentifier": "com.cityconnect.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f766e"
       },
-      "package": "com.econav.app"
+      "package": "com.cityconnect.app"
     },
     "web": {
       "bundler": "metro",

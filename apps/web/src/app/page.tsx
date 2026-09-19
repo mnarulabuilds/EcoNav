@@ -14,7 +14,7 @@ export default function HomePage() {
         <section className="landing-hero">
           <h1>One platform for citizens and government</h1>
           <p className="muted">
-            Report issues, discover schemes, book waste pickups, and run municipal operations — built on EcoNav route intelligence.
+            Report issues, discover schemes, book waste pickups, and run municipal route operations from one platform.
           </p>
           <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '1rem' }}>
             <Link href="/citizen" className="btn btn-primary">

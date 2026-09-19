@@ -126,7 +126,7 @@ export default function PlannerApp() {
     <>
       <header className="app-header">
         <div>
-          <h1>EcoNav</h1>
+          <h1>CityConnect</h1>
           <p>Smart City Waste Disposal Route Planner</p>
         </div>
       </header>

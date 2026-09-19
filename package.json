@@ -1,8 +1,8 @@
 {
-  "name": "econav",
+  "name": "cityconnect",
   "version": "1.0.0",
   "private": true,
-  "description": "CityConnect smart city platform — citizen services and municipal operations (EcoNav waste routing)",
+  "description": "CityConnect — smart city platform for citizens and municipal operations",
   "license": "MIT",
   "workspaces": [
     "packages/*",

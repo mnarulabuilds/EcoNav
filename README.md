@@ -1,6 +1,6 @@
-# CityConnect (EcoNav)
+# CityConnect
 
-**CityConnect** is a smart city platform for citizens and municipal officials. It combines citizen-facing services (civic grievances, schemes, health, waste/e-waste bookings, and more) with **EcoNav** waste route planning for operations teams.
+**CityConnect** is a smart city platform for citizens and municipal officials. It combines citizen-facing services (civic grievances, schemes, health, waste/e-waste bookings, and more) with waste **route planning and simulation** for operations teams.
 
 ## Platform modules (citizen web)
 
@@ -28,7 +28,7 @@ npm run dev            # API + web + notification worker
 
 Without Docker, set `DATABASE_URL` to your own Postgres or `PLATFORM_STORE=memory` for in-memory mode.
 
-## EcoNav waste operations
+## Waste route operations
 
 - **Interactive map planning** — Place depot and collection sites on OpenStreetMap (web) or native maps (mobile)
 - **Capacitated route optimization** — Clarke-Wright Savings Algorithm with 2-opt improvement (CVRP)
@@ -42,7 +42,7 @@ Without Docker, set `DATABASE_URL` to your own Postgres or `PLATFORM_STORE=memor
 ## Architecture
 
 ```
-EcoNav/
+CityConnect/
 ├── packages/core/            # CVRP solver, geo utils, simulation
 ├── packages/platform/      # Smart city domain types & seed data
 ├── packages/schemes-engine/ # Scheme eligibility rules
@@ -73,7 +73,7 @@ EcoNav/
 
 ```bash
 git clone <repository-url>
-cd EcoNav
+cd CityConnect
 cp .env.example .env
 npm install
 npm run build --workspace=@econav/core
@@ -192,7 +192,7 @@ Plan optimal waste collection routes.
 
 ## Route Optimization
 
-EcoNav solves the **Capacitated Vehicle Routing Problem (CVRP)**:
+CityConnect’s route planner solves the **Capacitated Vehicle Routing Problem (CVRP)**:
 
 1. Build a distance matrix using Haversine great-circle distances
 2. Apply Clarke-Wright Savings Algorithm to merge routes efficiently
